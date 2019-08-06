@@ -1,0 +1,72 @@
+key.oxygen_mail.openMailMenu=Открыть Меню Почты
+
+oxygen_mail.incoming=Вы получили новое письмо.
+
+oxygen_mail.message.genericTitle=Письмо
+
+oxygen_mail.gui.context.take=Получить
+oxygen_mail.gui.context.pay=Оплатить
+oxygen_mail.gui.context.return=Вернуть
+oxygen_mail.gui.context.remove=Удалить
+
+oxygen_mail.gui.mail.title=Почта
+
+oxygen_mail.gui.mail.sendButton=Отправить
+
+oxygen_mail.gui.mail.incoming=Входящие
+oxygen_mail.gui.mail.sending=Отправка
+oxygen_mail.gui.mail.attachment=Вложение
+oxygen_mail.gui.mail.attachment.cost=Стоимость
+oxygen_mail.gui.mail.addressee=Получатель: %s
+oxygen_mail.gui.mail.noAttachment=Нет Вложения
+
+oxygen_mail.gui.mail.callback.takeAttachment=Принять Вложение
+oxygen_mail.gui.mail.callback.takeAttachment.request=Принять вложение?
+oxygen_mail.gui.mail.callback.returnAttachment=Вернуть Вложение
+oxygen_mail.gui.mail.callback.returnAttachment.request=Вернуть отправителю?
+oxygen_mail.gui.mail.callback.removeMessage=Удалить Письмо
+oxygen_mail.gui.mail.callback.removeMessage.request=Письмо будет удалено.
+oxygen_mail.gui.mail.callback.sendMessage=Отправка
+
+oxygen_mail.gui.mail.sendTo=Получатель:
+oxygen_mail.gui.mail.subject=Тема:
+
+oxygen_mail.gui.mail.playerOnline=Игрок в сети
+oxygen_mail.gui.mail.playerOffline=Игрок не в сети или не существует
+oxygen_mail.gui.mail.postage=Почтовый Сбор:
+oxygen_mail.gui.mail.remittance=Денежный Перевод
+oxygen_mail.gui.mail.cod=Наложенный Платёж
+oxygen_mail.gui.mail.package=Посылка
+
+oxygen_mail.gui.mail.msg.sender=Отправитель: %s
+oxygen_mail.gui.mail.msg.expires=Ист.: %s
+oxygen_mail.gui.mail.msg.received=Получено: %s назад
+
+oxygen_mail.gui.neverExpires=Никогда
+
+oxygen_mail.chat_message.messageSent=Сообщение отправлено.
+oxygen_mail.chat_message.messageNotSent=Сообщение не отправлено.
+oxygen_mail.chat_message.attachmentReceived=Вложение получено.
+oxygen_mail.chat_message.attachmentReturned=Вложение возвращено отправителю.
+oxygen_mail.chat_message.messageRemoved=Сообщение удалено.
+
+oxygen_mail.command.dataReset=Данные <oxygen: mail> сброшены для клиента.
+
+oxygen_mail.mail.service_letter=Сервисное Письмо
+oxygen_mail.mail.letter=Письмо
+oxygen_mail.mail.service_remittance=Сервисный Денежный Перевод
+oxygen_mail.mail.remittance=Денежный Перевод
+oxygen_mail.mail.service_package=Сервисная Посылка
+oxygen_mail.mail.package=Посылка
+oxygen_mail.mail.package_with_cod=Посылка Наложенным Платежом
+
+mail.sender.sys=Система
+mail.subject.return=Возврат
+mail.message.remittanceReturn=Возврат невостребованного денежного перевода.
+mail.message.packageReturn=Возврат невостребованной посылки.
+mail.cod.pay.s=Оплата
+mail.cod.pay.m=Игрок оплатил наложенный платёж.
+
+oxygen_mail.tooltip.postage.value=%s за отправку
+oxygen_mail.tooltip.postage.percent=%s процентов от суммы
+oxygen_mail.tooltip.postage.cod=%s за отправку и %s процентов от суммы наложенного платежа
