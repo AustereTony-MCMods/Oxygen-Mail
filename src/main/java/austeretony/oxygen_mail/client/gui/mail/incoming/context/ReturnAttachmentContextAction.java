@@ -26,7 +26,7 @@ public class ReturnAttachmentContextAction extends AbstractContextAction {
             if ((type == EnumMail.REMITTANCE 
                     || type == EnumMail.PACKAGE 
                     || type == EnumMail.PACKAGE_WITH_COD) 
-                    && !this.section.getCurrentMessage().sender.equals(ClientReference.getClientPlayer().getName())) {
+                    && !this.section.getCurrentMessage().senderName.equals(ClientReference.getClientPlayer().getName())) {
                 return true;
             }         
         }

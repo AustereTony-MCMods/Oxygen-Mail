@@ -5,7 +5,7 @@ import austeretony.alternateui.screen.core.GUISimpleElement;
 import austeretony.oxygen.client.core.api.ClientReference;
 import austeretony.oxygen.client.gui.OxygenGUITextures;
 import austeretony.oxygen.client.gui.settings.GUISettings;
-import austeretony.oxygen_mail.common.main.Message;
+import austeretony.oxygen_mail.common.main.Mail;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.item.ItemStack;
@@ -85,7 +85,7 @@ public class AttachmentGUIElement extends GUISimpleElement<AttachmentGUIElement>
         }
     }
 
-    public void setAttachment(Message message) {
+    public void setAttachment(Mail message) {
         this.mode = - 1; 
         this.itemStack = null;
         switch (message.type) {
@@ -113,7 +113,7 @@ public class AttachmentGUIElement extends GUISimpleElement<AttachmentGUIElement>
 
     @Override
     public void drawTooltip(int mouseX, int mouseY) {
-        if (this.itemStack != null && mouseX >= this.getX() && mouseY >= this.getY() && mouseX < this.getX() + this.getWidth() && mouseY < this.getY() + this.getHeight())
+        if (this.isEnabled() && this.itemStack != null && mouseX >= this.getX() && mouseY >= this.getY() && mouseX < this.getX() + this.getWidth() && mouseY < this.getY() + this.getHeight())
             this.screen.drawToolTip(this.itemStack, mouseX, mouseY);
     }
 }

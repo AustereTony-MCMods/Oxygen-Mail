@@ -11,15 +11,15 @@ import net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent;
 
 public class MailKeyHandler {
 
-    public static final KeyBinding MAIL = new KeyBinding("key.oxygen_mail.openMailMenu", Keyboard.KEY_RBRACKET, "Oxygen");
+    public static final KeyBinding MAIL_MENU = new KeyBinding("key.oxygen_mail.openMailMenu", Keyboard.KEY_RBRACKET, "Oxygen");
 
     public MailKeyHandler() {
-        ClientReference.registerKeyBinding(MAIL);
+        ClientReference.registerKeyBinding(MAIL_MENU);
     }
 
     @SubscribeEvent
     public void onKeyInput(KeyInputEvent event) {        
-        if (MAIL.isPressed())
+        if (MAIL_MENU.isPressed())
             AdvancedGUIHandlerClient.openScreen(MailMain.MAIL_MENU_SCREEN_ID);
     }
 }

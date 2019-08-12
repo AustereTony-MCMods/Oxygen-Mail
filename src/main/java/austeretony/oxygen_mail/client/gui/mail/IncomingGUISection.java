@@ -17,6 +17,7 @@ import austeretony.alternateui.screen.text.GUITextField;
 import austeretony.alternateui.screen.text.GUITextLabel;
 import austeretony.alternateui.util.EnumGUIAlignment;
 import austeretony.alternateui.util.EnumGUIOrientation;
+import austeretony.oxygen.client.api.OxygenGUIHelper;
 import austeretony.oxygen.client.api.SoundEventHelperClient;
 import austeretony.oxygen.client.core.api.ClientReference;
 import austeretony.oxygen.client.gui.OxygenGUITextures;
@@ -35,7 +36,7 @@ import austeretony.oxygen_mail.client.gui.mail.incoming.context.TakeAttachmentCo
 import austeretony.oxygen_mail.client.input.MailKeyHandler;
 import austeretony.oxygen_mail.common.config.MailConfig;
 import austeretony.oxygen_mail.common.main.EnumMail;
-import austeretony.oxygen_mail.common.main.Message;
+import austeretony.oxygen_mail.common.main.Mail;
 
 public class IncomingGUISection extends AbstractGUISection {
 
@@ -51,7 +52,7 @@ public class IncomingGUISection extends AbstractGUISection {
 
     private IncomingMessageGUIButton currentMessageButton;
 
-    private Message currentMessage;
+    private Mail currentMessage;
 
     private AbstractGUICallback takeAttachmentCallback, returnAttachmentCallback, removeMessageCallback;
 
@@ -85,7 +86,7 @@ public class IncomingGUISection extends AbstractGUISection {
 
         this.profilesPanel = new GUIButtonPanel(EnumGUIOrientation.VERTICAL, 0, 24, 75, 11).setButtonsOffset(1).setTextScale(GUISettings.instance().getPanelTextScale());
         this.addElement(this.profilesPanel);
-        this.addElement(this.searchField = new GUITextField(0, 14, 78, 9, Message.MESSAGE_TITLE_MAX_LENGTH)
+        this.addElement(this.searchField = new GUITextField(0, 14, 78, 9, Mail.MESSAGE_TITLE_MAX_LENGTH)
                 .enableDynamicBackground(GUISettings.instance().getEnabledTextFieldColor(), GUISettings.instance().getDisabledTextFieldColor(), GUISettings.instance().getHoveredTextFieldColor())
                 .setDisplayText("...", false, GUISettings.instance().getSubTextScale()).setLineOffset(3).cancelDraggedElementLogic().disableFull());
 
@@ -128,23 +129,23 @@ public class IncomingGUISection extends AbstractGUISection {
     public void sortMail(int mode) {
         this.resetMessageContent();
 
-        List<Message> messages = new ArrayList<Message>(MailManagerClient.instance().getMessages());
+        List<Mail> mail = new ArrayList<Mail>(MailManagerClient.instance().getMessages());
 
         if (mode == 0)
-            Collections.sort(messages, (m1, m2)->(int) ((m2.getId() - m1.getId()) / 10_000L));
+            Collections.sort(mail, (m1, m2)->(int) ((m2.getId() - m1.getId()) / 10_000L));
         else
-            Collections.sort(messages, (m1, m2)->(int) ((m1.getId() - m2.getId()) / 10_000L));
+            Collections.sort(mail, (m1, m2)->(int) ((m1.getId() - m2.getId()) / 10_000L));
 
         this.profilesPanel.reset();
         IncomingMessageGUIButton button;
-        for (Message message : messages) {
-            button = new IncomingMessageGUIButton(message);
+        for (Mail msg : mail) {
+            button = new IncomingMessageGUIButton(msg);
             button.enableDynamicBackground(GUISettings.instance().getEnabledElementColor(), GUISettings.instance().getEnabledElementColor(), GUISettings.instance().getHoveredElementColor());
-            if (!MailManagerClient.instance().isMarkedAsRead(message.getId()))
+            if (!MailManagerClient.instance().isMarkedAsRead(msg.getId()))
                 button.setTextDynamicColor(0xFF99FFFF, 0xFF7ACCCC, 0xFFCCFFFF);
             else
                 button.setTextDynamicColor(GUISettings.instance().getEnabledTextColor(), GUISettings.instance().getDisabledTextColor(), GUISettings.instance().getHoveredTextColor());
-            button.setDisplayText(ClientReference.localize(message.subject));
+            button.setDisplayText(ClientReference.localize(msg.subject));
             button.setTextAlignment(EnumGUIAlignment.LEFT, 2);
 
             this.profilesPanel.addButton(button);
@@ -222,15 +223,19 @@ public class IncomingGUISection extends AbstractGUISection {
 
     @Override
     public boolean keyTyped(char typedChar, int keyCode) {   
-        if (keyCode == MailKeyHandler.MAIL.getKeyCode() && !this.hasCurrentCallback())
-            this.screen.close();
+        if (!this.searchField.isDragged() && !this.hasCurrentCallback())
+            if (OxygenGUIHelper.isOxygenMenuEnabled()) {
+                if (keyCode == MailMenuGUIScreen.MAIL_MENU_ENTRY.index + 2)
+                    this.screen.close();
+            } else if (keyCode == MailKeyHandler.MAIL_MENU.getKeyCode())
+                this.screen.close();
         return super.keyTyped(typedChar, keyCode); 
     }
 
     private void loadMessageContent(long messageId) {
         this.currentMessage = MailManagerClient.instance().getMessage(messageId);
 
-        this.senderTextLabel.setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.msg.sender", ClientReference.localize(this.currentMessage.sender)));
+        this.senderTextLabel.setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.msg.sender", ClientReference.localize(this.currentMessage.senderName)));
         this.senderTextLabel.enableFull(); 
         this.expireTimeTextLabel.setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.msg.expires", this.getExpirationTimeLocalizedString(this.currentMessage.type, this.currentMessage.getId())));
         this.expireTimeTextLabel.setX(this.getWidth() - 2 - this.textWidth(this.expireTimeTextLabel.getDisplayText(), GUISettings.instance().getSubTextScale()));
@@ -271,7 +276,7 @@ public class IncomingGUISection extends AbstractGUISection {
         return this.currentMessageButton;
     }
 
-    public Message getCurrentMessage() {
+    public Mail getCurrentMessage() {
         return this.currentMessage;
     }
 

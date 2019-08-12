@@ -17,7 +17,7 @@ import austeretony.oxygen.common.main.SharedPlayerData;
 import austeretony.oxygen.util.StreamUtils;
 import austeretony.oxygen_mail.common.EnumMessageOperation;
 import austeretony.oxygen_mail.common.main.MailMain;
-import austeretony.oxygen_mail.common.main.Message;
+import austeretony.oxygen_mail.common.main.Mail;
 import austeretony.oxygen_mail.common.network.server.SPMessageOperation;
 import austeretony.oxygen_mail.common.network.server.SPSendMessage;
 import io.netty.util.internal.ConcurrentSet;
@@ -26,7 +26,7 @@ public class MailManagerClient implements IPersistentData {
 
     private static MailManagerClient instance;
 
-    private final Map<Long, Message> mail = new ConcurrentHashMap<Long, Message>();
+    private final Map<Long, Mail> mail = new ConcurrentHashMap<Long, Mail>();
 
     private final Set<Long> read = new ConcurrentSet<Long>();
 
@@ -52,7 +52,7 @@ public class MailManagerClient implements IPersistentData {
         return this.mail.size();
     }
 
-    public Collection<Message> getMessages() {
+    public Collection<Mail> getMessages() {
         return this.mail.values();
     }
 
@@ -60,11 +60,11 @@ public class MailManagerClient implements IPersistentData {
         return this.mail.keySet();
     }
 
-    public Message getMessage(long messageId) {
+    public Mail getMessage(long messageId) {
         return this.mail.get(messageId);
     }
 
-    public void addMessage(Message message) {
+    public void addMessage(Mail message) {
         this.mail.put(message.getId(), message);
     }
 
@@ -88,20 +88,19 @@ public class MailManagerClient implements IPersistentData {
         if (operation == EnumMessageOperation.RETURN 
                 || operation == EnumMessageOperation.REMOVE_MESSAGE) {
             this.removeMessage(messageId);
-			this.removeReadMark(messageId);
+            this.removeReadMark(messageId);
             this.saveMail();
         }
         MailMain.network().sendToServer(new SPMessageOperation(messageId, operation));
     }
 
-    public void sendMessageSynced(String addresseeUsername, Message message) {
+    public void sendMessageSynced(String addresseeUsername, Mail message) {
         MailMain.network().sendToServer(new SPSendMessage(addresseeUsername, message));
     }
 
     public static boolean isPlayerAvailable(String username) {
-        //TODO DEBUG. Allows sending messages to yourself.
-        //if (username.equals(OxygenHelperClient.getSharedClientPlayerData().getUsername()))
-            //return false;
+        if (username.equals(OxygenHelperClient.getSharedClientPlayerData().getUsername()))
+            return false;
         SharedPlayerData sharedData = OxygenHelperClient.getSharedPlayerData(username);
         if (sharedData != null
                 && OxygenHelperClient.getPlayerStatus(sharedData) != EnumActivityStatus.OFFLINE || PrivilegeProviderClient.getPrivilegeValue(EnumOxygenPrivilege.EXPOSE_PLAYERS_OFFLINE.toString(), false))
@@ -127,7 +126,7 @@ public class MailManagerClient implements IPersistentData {
     @Override
     public void write(BufferedOutputStream bos) throws IOException {
         StreamUtils.write((short) this.mail.size(), bos);
-        for (Message message : this.mail.values())
+        for (Mail message : this.mail.values())
             message.write(bos);
         StreamUtils.write((short) this.read.size(), bos);
         for (long messageId : this.read)
@@ -139,9 +138,9 @@ public class MailManagerClient implements IPersistentData {
         int 
         amount = StreamUtils.readShort(bis),
         i = 0;
-        Message message;
+        Mail message;
         for (; i < amount; i++) {
-            message = Message.read(bis);
+            message = Mail.read(bis);
             this.mail.put(message.getId(), message);
         }
         amount = StreamUtils.readShort(bis);

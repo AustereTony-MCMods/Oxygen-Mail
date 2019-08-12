@@ -3,23 +3,28 @@ package austeretony.oxygen_mail.common.main;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.util.UUID;
 
 import austeretony.oxygen.util.PacketBufferUtils;
 import austeretony.oxygen.util.StreamUtils;
 import austeretony.oxygen_mail.common.config.MailConfig;
 import net.minecraft.network.PacketBuffer;
 
-public class Message {
+public class Mail {
 
     public static final int 
     MESSAGE_TITLE_MAX_LENGTH = 20,
     MESSAGE_MAX_LENGTH = 800;
 
+    public static final UUID SYSTEM_UUID = UUID.fromString("d10d07f6-ae3c-4ec6-a055-1160c4cf848a");
+
     public final EnumMail type;
 
     private long messageId;
 
-    public final String sender, subject, message;
+    public final UUID senderUUID;
+
+    public final String senderName, subject, message;
 
     private int currency;
 
@@ -27,9 +32,10 @@ public class Message {
 
     private boolean pending;
 
-    public Message(EnumMail type, String sender, String title, String message) {
+    public Mail(EnumMail type, UUID senderUUID, String senderName, String title, String message) {
         this.type = type;
-        this.sender = sender;
+        this.senderUUID = senderUUID;
+        this.senderName = senderName;
         if (title.length() > MESSAGE_TITLE_MAX_LENGTH)
             title = title.substring(0, MESSAGE_TITLE_MAX_LENGTH);
         this.subject = title;
@@ -115,7 +121,8 @@ public class Message {
 
     public void write(BufferedOutputStream bos) throws IOException {
         StreamUtils.write((byte) this.type.ordinal(), bos);
-        StreamUtils.write(this.sender, bos);
+        StreamUtils.write(this.senderUUID, bos);
+        StreamUtils.write(this.senderName, bos);
         StreamUtils.write(this.subject, bos);
         StreamUtils.write(this.message, bos);
 
@@ -128,9 +135,10 @@ public class Message {
             this.parcel.write(bos);
     }
 
-    public static Message read(BufferedInputStream bis) throws IOException {
-        Message message = new Message(
-                EnumMail.values()[StreamUtils.readByte(bis)], 
+    public static Mail read(BufferedInputStream bis) throws IOException {
+        Mail message = new Mail(
+                EnumMail.values()[StreamUtils.readByte(bis)],
+                StreamUtils.readUUID(bis),
                 StreamUtils.readString(bis), 
                 StreamUtils.readString(bis),
                 StreamUtils.readString(bis));
@@ -147,7 +155,8 @@ public class Message {
 
     public void write(PacketBuffer buffer) {
         buffer.writeByte(this.type.ordinal());
-        PacketBufferUtils.writeString(this.sender, buffer);
+        PacketBufferUtils.writeUUID(this.senderUUID, buffer);
+        PacketBufferUtils.writeString(this.senderName, buffer);
         PacketBufferUtils.writeString(this.subject, buffer);
         PacketBufferUtils.writeString(this.message, buffer);
 
@@ -160,9 +169,10 @@ public class Message {
             this.parcel.write(buffer);
     }
 
-    public static Message read(PacketBuffer buffer) {
-        Message message = new Message(
+    public static Mail read(PacketBuffer buffer) {
+        Mail message = new Mail(
                 EnumMail.values()[buffer.readByte()], 
+                PacketBufferUtils.readUUID(buffer),
                 PacketBufferUtils.readString(buffer),
                 PacketBufferUtils.readString(buffer),
                 PacketBufferUtils.readString(buffer));

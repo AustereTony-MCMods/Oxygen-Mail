@@ -4,7 +4,9 @@ import austeretony.alternateui.screen.core.AbstractGUISection;
 import austeretony.alternateui.screen.core.GUIBaseElement;
 import austeretony.alternateui.screen.core.GUIWorkspace;
 import austeretony.alternateui.util.EnumGUIAlignment;
+import austeretony.oxygen.client.gui.AbstractMenuEntry;
 import austeretony.oxygen.client.gui.SynchronizedGUIScreen;
+import austeretony.oxygen_mail.client.gui.MailMenuEntry;
 import austeretony.oxygen_mail.common.main.MailMain;
 import net.minecraft.util.ResourceLocation;
 
@@ -13,16 +15,18 @@ public class MailMenuGUIScreen extends SynchronizedGUIScreen {
     public static final ResourceLocation 
     INCOMING_BACKGROUND_TEXTURE = new ResourceLocation(MailMain.MODID, "textures/gui/mail/mail_incoming.png"),
     SENDING_BACKGROUND_TEXTURE = new ResourceLocation(MailMain.MODID, "textures/gui/mail/mail_sending.png"),
-    
+
     //
-    
+
     EXCLAMATION_MARK_ICONS_SMALL = new ResourceLocation(MailMain.MODID, "textures/gui/mail/exclamation_mark_icons_small.png"),
     HOLLOW_RHOMBUS_ICONS_SMALL = new ResourceLocation(MailMain.MODID, "textures/gui/mail/hollow_rhombus_icons_small.png"),
-    
+
     //
-    
+
     MESSAGE_CALLBACK_BACKGROUND = new ResourceLocation(MailMain.MODID, "textures/gui/mail/message_callback.png"),
     SENDING_CALLBACK_BACKGROUND = new ResourceLocation(MailMain.MODID, "textures/gui/mail/dending_callback.png");
+
+    public static final AbstractMenuEntry MAIL_MENU_ENTRY = new MailMenuEntry();
 
     protected IncomingGUISection incomingSection;
 

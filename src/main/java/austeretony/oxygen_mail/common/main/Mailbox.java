@@ -13,17 +13,17 @@ import austeretony.oxygen.common.privilege.api.PrivilegeProviderServer;
 import austeretony.oxygen.util.StreamUtils;
 import austeretony.oxygen_mail.common.config.MailConfig;
 
-public class PlayerMailbox {
+public class Mailbox {
 
     public final UUID playerUUID;
 
-    private final Map<Long, Message> mail = new ConcurrentHashMap<Long, Message>();
+    private final Map<Long, Mail> mail = new ConcurrentHashMap<Long, Mail>();
 
     private long lastMessageSendingTime;
 
     private boolean newMailExist;
 
-    public PlayerMailbox(UUID playerUUID) {
+    public Mailbox(UUID playerUUID) {
         this.playerUUID = playerUUID;
     }
 
@@ -31,7 +31,7 @@ public class PlayerMailbox {
         return this.mail.size();
     }
 
-    public Collection<Message> getMessages() {
+    public Collection<Mail> getMessages() {
         return this.mail.values();
     }
 
@@ -43,13 +43,13 @@ public class PlayerMailbox {
         return this.mail.containsKey(messageId);
     }
 
-    public Message getMessage(long messageId) {
+    public Mail getMessage(long messageId) {
         return this.mail.get(messageId);
     }
 
-    public void addMessage(Message message) {
+    public void addMessage(Mail message) {
         if (this.mail.containsKey(message.getId()))//TODO debug
-            MailMain.LOGGER.error("ADDING MESSAGE TO MAILBOX. Attempt adding message with existing messageId! FATAL ISSUE! Id creation algorithm improvements required! Player UUID: {}, Sender: {}", this.playerUUID, message.sender);                           
+            MailMain.LOGGER.error("ADDING MESSAGE TO MAILBOX. Attempt adding message with existing messageId! FATAL ISSUE! Id creation algorithm improvements required! Player UUID: {}, Sender: {}", this.playerUUID, message.senderName);                           
         this.mail.put(message.getId(), message);
         this.newMailExist = true;
     }
@@ -87,17 +87,17 @@ public class PlayerMailbox {
         StreamUtils.write(this.playerUUID, bos);
         StreamUtils.write(this.newMailExist, bos);
         StreamUtils.write((short) this.mail.size(), bos);
-        for (Message message : this.mail.values()) 
+        for (Mail message : this.mail.values()) 
             message.write(bos);
     }
 
-    public static PlayerMailbox read(BufferedInputStream bis) throws IOException {
-        PlayerMailbox mailbox = new PlayerMailbox(StreamUtils.readUUID(bis));
+    public static Mailbox read(BufferedInputStream bis) throws IOException {
+        Mailbox mailbox = new Mailbox(StreamUtils.readUUID(bis));
         mailbox.newMailExist = StreamUtils.readBoolean(bis);
         int amount = StreamUtils.readShort(bis);
-        Message message;
+        Mail message;
         for (int i = 0; i < amount; i++) {
-            message = Message.read(bis);
+            message = Mail.read(bis);
             mailbox.mail.put(message.getId(), message);
         }
         return mailbox;

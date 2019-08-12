@@ -21,6 +21,6 @@ public class MailEventsServer {
 
     @SubscribeEvent
     public void onPlayerLoaded(OxygenPlayerLoadedEvent event) {
-        MailManagerServer.instance().onPlayerLoaded(event.player);
+        MailManagerServer.instance().playerLoaded(event.player);
     }
 }

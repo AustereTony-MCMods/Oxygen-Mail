@@ -18,7 +18,7 @@ import austeretony.oxygen_mail.client.gui.mail.SendingGUISection;
 import austeretony.oxygen_mail.common.config.MailConfig;
 import austeretony.oxygen_mail.common.main.EnumMail;
 import austeretony.oxygen_mail.common.main.EnumMailPrivilege;
-import austeretony.oxygen_mail.common.main.Message;
+import austeretony.oxygen_mail.common.main.Mail;
 
 public class SendMessageGUICallback extends AbstractGUICallback {
 
@@ -34,7 +34,7 @@ public class SendMessageGUICallback extends AbstractGUICallback {
 
     private BalanceGUIElement postageElement;
 
-    private Message message;
+    private Mail message;
 
     private int postage;
 

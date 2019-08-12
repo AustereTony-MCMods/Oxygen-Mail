@@ -25,10 +25,10 @@ import austeretony.oxygen_mail.common.config.MailConfig;
 import austeretony.oxygen_mail.common.main.EnumMail;
 import austeretony.oxygen_mail.common.main.EnumMailChatMessage;
 import austeretony.oxygen_mail.common.main.EnumMailPrivilege;
+import austeretony.oxygen_mail.common.main.Mail;
 import austeretony.oxygen_mail.common.main.MailMain;
-import austeretony.oxygen_mail.common.main.Message;
+import austeretony.oxygen_mail.common.main.Mailbox;
 import austeretony.oxygen_mail.common.main.Parcel;
-import austeretony.oxygen_mail.common.main.PlayerMailbox;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
@@ -40,7 +40,7 @@ public class MailManagerServer implements IPersistentData {
 
     private final OxygenThread ioThread;
 
-    private final Map<UUID, PlayerMailbox> mailboxes = new ConcurrentHashMap<UUID, PlayerMailbox>();
+    private final Map<UUID, Mailbox> mailboxes = new ConcurrentHashMap<UUID, Mailbox>();
 
     public MailManagerServer() {
         this.ioThread = new OxygenThread("Mail IO Thread");
@@ -73,7 +73,7 @@ public class MailManagerServer implements IPersistentData {
         return this.mailboxes.size();
     }
 
-    public Collection<PlayerMailbox> getMailboxes() {
+    public Collection<Mailbox> getMailboxes() {
         return this.mailboxes.values();
     }
 
@@ -82,10 +82,10 @@ public class MailManagerServer implements IPersistentData {
     }
 
     public void createMailboxForPlayer(UUID playerUUID) {
-        this.mailboxes.put(playerUUID, new PlayerMailbox(playerUUID));
+        this.mailboxes.put(playerUUID, new Mailbox(playerUUID));
     }
 
-    public PlayerMailbox getPlayerMailbox(UUID playerUUID) {
+    public Mailbox getPlayerMailbox(UUID playerUUID) {
         return this.mailboxes.get(playerUUID);
     }
 
@@ -95,110 +95,91 @@ public class MailManagerServer implements IPersistentData {
                     new SimpleNotification(MailMain.INCOMING_MESSAGE_NOTIFICATION_ID, "oxygen_mail.incoming"));
     }
 
-    public void sendMail(EntityPlayerMP senderMP, String addresseeUsername, Message message) {
+    public void sendMail(EntityPlayerMP senderMP, String addresseeUsername, Mail message) {
         this.sendMail(senderMP, addresseeUsername, message.type, message.subject, message.message, message.getCurrency(), message.getParcel());
     }
 
     public void sendMail(EntityPlayerMP senderMP, String addresseeUsername, EnumMail type, String subject, String message, int currency, Parcel parcel) {
-        if (this.processPlayerMessageSending(senderMP, addresseeUsername, type, subject, message, currency, parcel, false))
+        UUID addresseeUUID = OxygenHelperServer.getPlayerUUID(addresseeUsername);
+        if (addresseeUUID != null && this.processPlayerMailSending(senderMP, type, addresseeUUID, subject, message, currency, parcel, false))
             OxygenHelperServer.sendMessage(senderMP, MailMain.MAIL_MOD_INDEX, EnumMailChatMessage.MESSAGE_SENT.ordinal());
         else
             OxygenHelperServer.sendMessage(senderMP, MailMain.MAIL_MOD_INDEX, EnumMailChatMessage.MESSAGE_NOT_SENT.ordinal());
     }
 
-    private boolean processPlayerMessageSending(EntityPlayerMP senderMP, String addresseeUsername, EnumMail type, String subject, String message, int currency, Parcel parcel, boolean isReturn) {
-        if (OxygenHelperServer.isValidUsername(addresseeUsername)) {
-            UUID 
-            senderUUID = CommonReference.getPersistentUUID(senderMP),
-            addresseeUUID = OxygenHelperServer.getPlayerUUID(addresseeUsername);
-            if (this.isMailboxExist(addresseeUUID)) { 
-                //&& !targetUUID.equals(senderUUID)) {//TODO DEBUG allows players send messages to themselves
-                PlayerMailbox senderMailbox = this.getPlayerMailbox(senderUUID);
-                if (senderMailbox.canSendMessage()) {
-                    PlayerMailbox targetMailbox = this.getPlayerMailbox(addresseeUUID);
-                    if (targetMailbox.canAcceptMessages()) {
-                        switch (type) {
-                        case LETTER:
-                            currency = 0;
-                            parcel = null;
-                            if (!this.processLetter(senderUUID)) {
-                                //TODO debug
-                                MailMain.LOGGER.error("SENDING. Sender doesn't have enough money to pay postage for LETTER sending! GUI verifications breached! Sender: {}, Addressee: {}.", CommonReference.getName(senderMP), addresseeUsername);
-                                return false;
-                            }
-                            break;
-                        case REMITTANCE:
-                            if (currency <= 0)
-                                return false;
-                            parcel = null;
-                            if (!isReturn && !this.processRemittance(senderUUID, currency)) {
-                                //TODO debug
-                                MailMain.LOGGER.error("SENDING. Sender doesn't have enough money to pay postage for REMITTANCE sending! GUI verifications breached! Sender: {}, Addressee: {}.", CommonReference.getName(senderMP), addresseeUsername);                            
-                                return false;
-                            }
-                            break;
-                        case PACKAGE:
-                            if (parcel == null)
-                                return false;
-                            if (parcel.amount <= 0)
-                                return false;
-                            currency = 0;
-                            if (!isReturn && !this.processPackage(senderMP, senderUUID, parcel)) {
-                                //TODO debug
-                                MailMain.LOGGER.error("SENDING. Sender doesn't have enough money to pay postage for PACKAGE sending! GUI verifications breached! Sender: {}, Addressee: {}.", CommonReference.getName(senderMP), addresseeUsername);
-                                return false;
-                            }
-                            break;
-                        case PACKAGE_WITH_COD:
-                            if (currency <= 0 || parcel == null)
-                                return false;
-                            if (parcel.amount <= 0)
-                                return false;
-                            if (!isReturn && !this.processPackageWithCOD(senderMP, senderUUID, currency, parcel)) {
-                                //TODO debug
-                                MailMain.LOGGER.error("SENDING. Sender doesn't have enough money to pay postage for COD sending! GUI verifications breached! Sender: {}, Addressee: {}.", CommonReference.getName(senderMP), addresseeUsername);                          
-                                return false;
-                            }
-                            break;
-                        default://service mail
-                            //TODO debug
-                            MailMain.LOGGER.error("SENDING. Player attempted to send SERVICE message! GUI verifications breached! Sender: {}, Addressee: {}.", CommonReference.getName(senderMP), addresseeUsername);                          
+    private boolean processPlayerMailSending(EntityPlayerMP senderMP, EnumMail type, UUID addresseeUUID, String subject, String message, int currency, Parcel parcel, boolean isReturn) {
+        UUID senderUUID = CommonReference.getPersistentUUID(senderMP);
+        if (!this.isMailboxExist(addresseeUUID))
+            this.createMailboxForPlayer(addresseeUUID);
+        if (!addresseeUUID.equals(senderUUID)) {
+            Mailbox senderMailbox = this.getPlayerMailbox(senderUUID);
+            if (senderMailbox.canSendMessage()) {
+                Mailbox targetMailbox = this.getPlayerMailbox(addresseeUUID);
+                if (targetMailbox.canAcceptMessages()) {
+                    switch (type) {
+                    case LETTER:
+                        currency = 0;
+                        parcel = null;
+                        if (!this.processLetter(senderUUID))
                             return false;
-                        }                 
-                        this.sendMessage(
-                                targetMailbox, 
-                                System.currentTimeMillis(), 
-                                type, 
-                                CommonReference.getName(senderMP), 
-                                subject, 
-                                message, 
-                                parcel, 
-                                currency, 
-                                true);
-                        senderMailbox.updateLastMessageSendingTime();
-                        return true;
-                    } else//TODO debug
-                        MailMain.LOGGER.error("SENDING. Addressee mailbox is full! Sender: {}, Addressee: {}.", CommonReference.getName(senderMP), addresseeUsername);
-                } else//TODO debug
-                    MailMain.LOGGER.error("SENDING. Sender have sending cooldown! Sender: {}, Addressee: {}.", CommonReference.getName(senderMP), addresseeUsername);
-            } else//TODO debug
-                MailMain.LOGGER.error("SENDING. Addressee mailbox not exist (impossible)! Sender: {}, Addressee: {}.", CommonReference.getName(senderMP), addresseeUsername);
-        } else//TODO debug
-            MailMain.LOGGER.error("SENDING. Invalid addressee username! Sender: {}, Addressee: {}.", CommonReference.getName(senderMP), addresseeUsername);
+                        break;
+                    case REMITTANCE:
+                        if (currency <= 0)
+                            return false;
+                        parcel = null;
+                        if (!isReturn && !this.processRemittance(senderUUID, currency))
+                            return false;
+                        break;
+                    case PACKAGE:
+                        if (parcel == null)
+                            return false;
+                        if (parcel.amount <= 0)
+                            return false;
+                        currency = 0;
+                        if (!isReturn && !this.processPackage(senderMP, senderUUID, parcel))
+                            return false;
+                        break;
+                    case PACKAGE_WITH_COD:
+                        if (currency <= 0 || parcel == null)
+                            return false;
+                        if (parcel.amount <= 0)
+                            return false;
+                        if (!isReturn && !this.processPackageWithCOD(senderMP, senderUUID, currency, parcel))
+                            return false;
+                        break;
+                    default://service mail
+                        return false;
+                    }                 
+                    this.sendMail(
+                            targetMailbox, 
+                            System.currentTimeMillis(), 
+                            type, 
+                            senderUUID,
+                            CommonReference.getName(senderMP), 
+                            subject, 
+                            message, 
+                            parcel, 
+                            currency, 
+                            true);
+                    senderMailbox.updateLastMessageSendingTime();
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
-    private void sendMessage(PlayerMailbox mailbox, long messageId, EnumMail type, String sender, String subject, String message, Parcel parcel, int currency, boolean save) {
-        Message msg = new Message(type, sender, subject, message);
-        msg.setId(messageId);
+    private void sendMail(Mailbox targetMailbox, long mailId, EnumMail type, UUID senderUUID, String senderName, String subject, String message, Parcel parcel, int currency, boolean save) {
+        Mail msg = new Mail(type, senderUUID, senderName, subject, message);
+        msg.setId(mailId);
         msg.setCurrency(currency);
         msg.setParcel(parcel);
         if (currency > 0 || parcel != null)
             msg.setPending(true);
-        mailbox.addMessage(msg);
+        targetMailbox.addMessage(msg);
         if (save)
             this.saveMailboxes();
-        this.sendNewMessageNotification(mailbox.playerUUID);
+        this.sendNewMessageNotification(targetMailbox.playerUUID);
     }
 
     private boolean processLetter(UUID playerUUID) {
@@ -281,9 +262,9 @@ public class MailManagerServer implements IPersistentData {
 
     public void processMessageOperation(EntityPlayerMP playerMP, long messageId, EnumMessageOperation operation) {
         UUID playerUUID = CommonReference.getPersistentUUID(playerMP);
-        PlayerMailbox mailbox = this.getPlayerMailbox(playerUUID);
+        Mailbox mailbox = this.getPlayerMailbox(playerUUID);
         if (mailbox.messageExist(messageId)) {
-            Message message = mailbox.getMessage(messageId);
+            Mail message = mailbox.getMessage(messageId);
             switch (operation) {
             case TAKE_ATTACHMENT:
                 if (message.isPending() 
@@ -309,15 +290,13 @@ public class MailManagerServer implements IPersistentData {
                     mailbox.removeMessage(messageId);
                     this.saveMailboxes();
                     OxygenHelperServer.sendMessage(playerMP, MailMain.MAIL_MOD_INDEX, EnumMailChatMessage.MESSAGE_REMOVED.ordinal());
-                } else//TODO debug
-                    MailMain.LOGGER.error("MESSAGE REMOVING. Attempt to remove pending message! GUI verification breach! Player: {}.", CommonReference.getName(playerMP));                           
+                }
                 break;
             }
-        } else//TODO debug
-            MailMain.LOGGER.error("MESSAGE OPERATION. Player attempted to interact with unknown message! Cheating or synchronization failure! Player: {}.", CommonReference.getName(playerMP));                          
+        }
     }
 
-    private boolean takeAttachment(EntityPlayerMP playerMP, UUID playerUUID, Message message) {
+    private boolean takeAttachment(EntityPlayerMP playerMP, UUID playerUUID, Mail message) {
         if (message.type == EnumMail.PACKAGE 
                 || message.type == EnumMail.SERVICE_PACKAGE 
                 || message.type == EnumMail.PACKAGE_WITH_COD) {
@@ -329,11 +308,10 @@ public class MailManagerServer implements IPersistentData {
                 CurrencyHelperServer.removeCurrency(playerUUID, message.getCurrency());
                 WatcherHelperServer.setValue(playerUUID, OxygenPlayerData.CURRENCY_COINS_WATCHER_ID, (int) CurrencyHelperServer.getCurrency(playerUUID));
                 CurrencyHelperServer.save(playerUUID);
-                //TODO Send currency to cod sender (take cod postage)
                 int codPostage = MathUtils.percentValueOf(message.getCurrency(), 
-                        PrivilegeProviderServer.getPrivilegeValue(OxygenHelperServer.getPlayerUUID(message.sender), EnumMailPrivilege.PACKAGE_WITH_COD_POSTAGE_PERCENT.toString(), MailConfig.PACKAGE_WITH_COD_POSTAGE_PERCENT.getIntValue()));
+                        PrivilegeProviderServer.getPrivilegeValue(OxygenHelperServer.getPlayerUUID(message.senderName), EnumMailPrivilege.PACKAGE_WITH_COD_POSTAGE_PERCENT.toString(), MailConfig.PACKAGE_WITH_COD_POSTAGE_PERCENT.getIntValue()));
                 this.sendServiceRemittance(
-                        OxygenHelperServer.getPlayerUUID(message.sender), 
+                        OxygenHelperServer.getPlayerUUID(message.senderName), 
                         CommonReference.getName(playerMP), 
                         "mail.cod.pay.s", 
                         "mail.cod.pay.m", 
@@ -349,39 +327,35 @@ public class MailManagerServer implements IPersistentData {
             CurrencyHelperServer.save(playerUUID);
             return true;
         }
-        //TODO debug
-        MailMain.LOGGER.error("ATTACHMENT RECEIVING. Player have not enought inventory space or money to pay C.O.D! GUI verification breach! Player: {}.", CommonReference.getName(playerMP));                          
         return false;
     }
 
-    private boolean returnAttachmentToSender(EntityPlayerMP playerMP, Message message) {
+    private boolean returnAttachmentToSender(EntityPlayerMP playerMP, Mail message) {
         if (message.type == EnumMail.REMITTANCE 
                 || message.type == EnumMail.PACKAGE
                 || message.type == EnumMail.PACKAGE_WITH_COD) {
-            if (OxygenHelperServer.isValidUsername(message.sender) 
-                    && !message.sender.equals(CommonReference.getName(playerMP))) {
+            if (OxygenHelperServer.getPlayerUUID(message.senderName) != null 
+                    && !message.senderName.equals(CommonReference.getName(playerMP))) {
                 EnumMail type = message.type;
                 if (message.type == EnumMail.PACKAGE_WITH_COD)
                     type = EnumMail.PACKAGE;
-                if (this.processPlayerMessageSending(playerMP, message.sender, type, "mail.subject.return", message.message, message.getCurrency(), message.getParcel(), true))
+                if (this.processPlayerMailSending(playerMP, type, message.senderUUID, "mail.subject.return", message.message, message.getCurrency(), message.getParcel(), true))
                     return true;
             }
         }
-        //TODO debug
-        MailMain.LOGGER.error("ATTACHMENT RETURNING. Addressee username is invalid (impossible) or returning to yourself! Player: {}, Addressee: {}", CommonReference.getName(playerMP), message.sender);                          
         return false;
     }
 
     public void processExpiredMail() {
         int removed = 0;
-        for (PlayerMailbox playerMailbox : this.mailboxes.values()) {
-            Iterator<Message> iterator = playerMailbox.getMessages().iterator();
-            Message message;
+        for (Mailbox mailbox : this.mailboxes.values()) {
+            Iterator<Mail> iterator = mailbox.getMessages().iterator();
+            Mail mail;
             while (iterator.hasNext()) {
-                message = iterator.next();
-                if (message.isExpired()) {
-                    if (message.isPending())
-                        this.processExpiredMessage(message);
+                mail = iterator.next();
+                if (mail.isExpired()) {
+                    if (mail.isPending())
+                        this.processExpiredMessage(mail);
                     iterator.remove();
                     removed++;
                 }
@@ -391,29 +365,27 @@ public class MailManagerServer implements IPersistentData {
         MailMain.LOGGER.info("Expired mail processed. Removed {} messages in total", removed);
     }
 
-    private void processExpiredMessage(Message message) {
+    private void processExpiredMessage(Mail message) {
         if (message.type == EnumMail.REMITTANCE 
                 || message.type == EnumMail.PACKAGE
                 || message.type == EnumMail.PACKAGE_WITH_COD) {
-            if (OxygenHelperServer.isValidUsername(message.sender)) {
-                UUID playerUUID = OxygenHelperServer.getPlayerUUID(message.sender);
-                if (message.type == EnumMail.REMITTANCE)
-                    this.sendServiceRemittance(playerUUID, "mail.sender.sys", "mail.subject.return", "mail.message.remittanceReturn", message.getCurrency(), false);
-                if (message.type == EnumMail.PACKAGE 
-                        || message.type == EnumMail.PACKAGE_WITH_COD)
-                    this.sendServicePackage(playerUUID, "mail.sender.sys", "mail.subject.return", "mail.message.packageReturn", message.getParcel(), false);
-            }
+            if (message.type == EnumMail.REMITTANCE)
+                this.sendServiceRemittance(message.senderUUID, "mail.sender.sys", "mail.subject.return", "mail.message.remittanceReturn", message.getCurrency(), false);
+            if (message.type == EnumMail.PACKAGE 
+                    || message.type == EnumMail.PACKAGE_WITH_COD)
+                this.sendServicePackage(message.senderUUID, "mail.sender.sys", "mail.subject.return", "mail.message.packageReturn", message.getParcel(), false);
         }
     }
 
-    public void sendServiceLetter(UUID playerUUID, String sender, String subject, String message, boolean save) {
-        PlayerMailbox mailbox = this.getPlayerMailbox(playerUUID);
-        if (mailbox.getMessagesAmount() < MailConfig.MAILBOX_SIZE.getIntValue()) 
-            this.sendMessage(
+    public void sendServiceLetter(UUID addresseeUUID, String senderName, String subject, String message, boolean save) {
+        Mailbox mailbox = this.getPlayerMailbox(addresseeUUID);
+        if (mailbox != null && mailbox.getMessagesAmount() < MailConfig.MAILBOX_SIZE.getIntValue()) 
+            this.sendMail(
                     mailbox, 
                     System.currentTimeMillis() + OxygenHelperServer.getRandom().nextInt(10_000),//dumb protection from duplicated identifiers
                     EnumMail.SERVICE_LETTER, 
-                    sender, 
+                    Mail.SYSTEM_UUID,
+                    senderName, 
                     subject, 
                     message,
                     null, 
@@ -421,14 +393,15 @@ public class MailManagerServer implements IPersistentData {
                     save);
     }
 
-    public void sendServiceRemittance(UUID playerUUID, String sender, String subject, String message, int remittanceValue, boolean save) {
-        PlayerMailbox mailbox = this.getPlayerMailbox(playerUUID);
-        if (mailbox.getMessagesAmount() < MailConfig.MAILBOX_SIZE.getIntValue())
-            this.sendMessage(
+    public void sendServiceRemittance(UUID addresseeUUID, String senderName, String subject, String message, int remittanceValue, boolean save) {
+        Mailbox mailbox = this.getPlayerMailbox(addresseeUUID);
+        if (mailbox != null && mailbox.getMessagesAmount() < MailConfig.MAILBOX_SIZE.getIntValue())
+            this.sendMail(
                     mailbox, 
                     System.currentTimeMillis() + OxygenHelperServer.getRandom().nextInt(10_000),
                     EnumMail.SERVICE_REMITTANCE, 
-                    sender, 
+                    Mail.SYSTEM_UUID,
+                    senderName, 
                     subject, 
                     message,
                     null, 
@@ -436,14 +409,15 @@ public class MailManagerServer implements IPersistentData {
                     save);
     }
 
-    public void sendServicePackage(UUID playerUUID, String sender, String subject, String message, Parcel parcel, boolean save) {
-        PlayerMailbox mailbox = this.getPlayerMailbox(playerUUID);
-        if (mailbox.getMessagesAmount() < MailConfig.MAILBOX_SIZE.getIntValue())
-            this.sendMessage(
+    public void sendServicePackage(UUID addresseeUUID, String senderName, String subject, String message, Parcel parcel, boolean save) {
+        Mailbox mailbox = this.getPlayerMailbox(addresseeUUID);
+        if (mailbox != null && mailbox.getMessagesAmount() < MailConfig.MAILBOX_SIZE.getIntValue())
+            this.sendMail(
                     mailbox, 
                     System.currentTimeMillis() + OxygenHelperServer.getRandom().nextInt(10_000),
                     EnumMail.SERVICE_PACKAGE, 
-                    sender, 
+                    Mail.SYSTEM_UUID,
+                    senderName, 
                     subject, 
                     message,
                     parcel, 
@@ -451,8 +425,7 @@ public class MailManagerServer implements IPersistentData {
                     save);
     }
 
-    //TODO onPlayerLoaded()
-    public void onPlayerLoaded(EntityPlayer player) {
+    public void playerLoaded(EntityPlayer player) {
         UUID playerUUID = CommonReference.getPersistentUUID(player);
         if (!this.isMailboxExist(playerUUID))
             this.createMailboxForPlayer(playerUUID);
@@ -476,18 +449,19 @@ public class MailManagerServer implements IPersistentData {
     @Override
     public void write(BufferedOutputStream bos) throws IOException {
         StreamUtils.write(this.mailboxes.size(), bos);
-        for (PlayerMailbox mailbox : this.mailboxes.values())
+        for (Mailbox mailbox : this.mailboxes.values())
             mailbox.write(bos);
     }
 
     @Override
     public void read(BufferedInputStream bis) throws IOException {
         int amount = StreamUtils.readInt(bis);
-        PlayerMailbox mailbox;
+        Mailbox mailbox;
         for (int i = 0; i < amount; i++) {
-            mailbox = PlayerMailbox.read(bis);
+            mailbox = Mailbox.read(bis);
             this.mailboxes.put(mailbox.playerUUID, mailbox);
         }
+        MailMain.LOGGER.info("Loaded {} mailboxes.", amount);
     }
 
     public void reset() {

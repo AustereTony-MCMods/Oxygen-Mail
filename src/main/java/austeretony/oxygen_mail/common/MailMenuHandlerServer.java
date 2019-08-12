@@ -6,7 +6,7 @@ import java.util.UUID;
 import austeretony.oxygen.common.api.network.OxygenNetwork;
 import austeretony.oxygen.common.sync.gui.api.IAdvancedGUIHandlerServer;
 import austeretony.oxygen_mail.common.main.MailMain;
-import austeretony.oxygen_mail.common.main.PlayerMailbox;
+import austeretony.oxygen_mail.common.main.Mailbox;
 import net.minecraft.network.PacketBuffer;
 
 public class MailMenuHandlerServer implements IAdvancedGUIHandlerServer {
@@ -23,7 +23,7 @@ public class MailMenuHandlerServer implements IAdvancedGUIHandlerServer {
 
     @Override
     public void writeEntries(UUID playerUUID, PacketBuffer buffer, long[] entriesIds) {
-        PlayerMailbox mailbox = MailManagerServer.instance().getPlayerMailbox(playerUUID);
+        Mailbox mailbox = MailManagerServer.instance().getPlayerMailbox(playerUUID);
         for (long entryId : entriesIds)
             mailbox.getMessage(entryId).write(buffer);
         mailbox.mailboxSynchronized();

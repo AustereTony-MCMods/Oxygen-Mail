@@ -2,14 +2,14 @@ package austeretony.oxygen_mail.client.gui.mail.incoming;
 
 import austeretony.oxygen.client.gui.IndexedGUIButton;
 import austeretony.oxygen_mail.client.gui.mail.MailMenuGUIScreen;
-import austeretony.oxygen_mail.common.main.Message;
+import austeretony.oxygen_mail.common.main.Mail;
 import net.minecraft.client.renderer.GlStateManager;
 
 public class IncomingMessageGUIButton extends IndexedGUIButton<Long> {
 
     private boolean isPending, hasAttachment;
 
-    public IncomingMessageGUIButton(Message message) {
+    public IncomingMessageGUIButton(Mail message) {
         super(message.getId());
         this.isPending = message.isPending();
         this.hasAttachment = message.hasAttachment();

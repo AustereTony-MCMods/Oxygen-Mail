@@ -2,6 +2,7 @@ package austeretony.oxygen_mail.client.gui.mail;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import austeretony.alternateui.screen.browsing.GUIScroller;
 import austeretony.alternateui.screen.button.GUIButton;
@@ -28,11 +29,10 @@ import austeretony.oxygen.util.MathUtils;
 import austeretony.oxygen_mail.client.MailManagerClient;
 import austeretony.oxygen_mail.client.gui.mail.sending.InventoryStackGUIButton;
 import austeretony.oxygen_mail.client.gui.mail.sending.callback.SendMessageGUICallback;
-import austeretony.oxygen_mail.client.input.MailKeyHandler;
 import austeretony.oxygen_mail.common.config.MailConfig;
 import austeretony.oxygen_mail.common.main.EnumMail;
 import austeretony.oxygen_mail.common.main.EnumMailPrivilege;
-import austeretony.oxygen_mail.common.main.Message;
+import austeretony.oxygen_mail.common.main.Mail;
 import austeretony.oxygen_mail.common.main.Parcel;
 import net.minecraft.item.ItemStack;
 
@@ -58,7 +58,7 @@ public class SendingGUISection extends AbstractGUISection {
 
     private AbstractGUICallback sendMessageCallback;
 
-    private Message latestMessage;
+    private Mail latestMessage;
 
     private final String 
     playerFoundStr = ClientReference.localize("oxygen_mail.gui.mail.playerOnline"),
@@ -82,9 +82,9 @@ public class SendingGUISection extends AbstractGUISection {
         this.addElement(this.addresseeStatusTextLabel = new GUITextLabel(2, 31).setTextScale(GUISettings.instance().getSubTextScale()).setEnabledTextColor(GUISettings.instance().getEnabledTextColorDark()).disableFull());
 
         this.addElement(new GUITextLabel(2, 40).setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.subject"), false, GUISettings.instance().getSubTextScale()));
-        this.addElement(this.subjectTextField = new GUITextField(2, 48, 120, 9, Message.MESSAGE_TITLE_MAX_LENGTH).enableDynamicBackground().setDisplayText("...", false, GUISettings.instance().getSubTextScale()).setLineOffset(3).cancelDraggedElementLogic());
+        this.addElement(this.subjectTextField = new GUITextField(2, 48, 120, 9, Mail.MESSAGE_TITLE_MAX_LENGTH).enableDynamicBackground().setDisplayText("...", false, GUISettings.instance().getSubTextScale()).setLineOffset(3).cancelDraggedElementLogic());
 
-        this.addElement(this.messageTextBoxField = new GUITextBoxField(2, 60, 120, 90, Message.MESSAGE_MAX_LENGTH).setLineOffset(2).setTextScale(GUISettings.instance().getSubTextScale()).enableDynamicBackground().cancelDraggedElementLogic());
+        this.addElement(this.messageTextBoxField = new GUITextBoxField(2, 60, 120, 90, Mail.MESSAGE_MAX_LENGTH).setLineOffset(2).setTextScale(GUISettings.instance().getSubTextScale()).enableDynamicBackground().cancelDraggedElementLogic());
 
         this.addElement(new GUITextLabel(127, 15).setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.attachment"), false, GUISettings.instance().getTextScale()));
         this.addElement(this.enableRemittanceButton = new GUICheckBoxButton(127, 25, 6).setSound(OxygenSoundEffects.BUTTON_CLICK.soundEvent)
@@ -223,12 +223,6 @@ public class SendingGUISection extends AbstractGUISection {
     @Override
     public boolean keyTyped(char typedChar, int keyCode) {   
         boolean flag = super.keyTyped(typedChar, keyCode);   
-        if (keyCode == MailKeyHandler.MAIL.getKeyCode() 
-                && !this.addresseeTextField.isDragged() 
-                && !this.subjectTextField.isDragged() 
-                && !this.messageTextBoxField.isDragged() 
-                && !this.hasCurrentCallback())
-            this.screen.close();
         if (this.addresseeTextField.isDragged()) {
             if (!this.addresseeTextField.getTypedText().isEmpty()) {
                 this.addresseeStatusTextLabel.enableFull();
@@ -250,7 +244,7 @@ public class SendingGUISection extends AbstractGUISection {
         return this.balanceElement.getBalance();
     }
 
-    public Message createMessage() {
+    public Mail createMessage() {
         EnumMail type = EnumMail.LETTER;
         if (this.enableRemittanceButton.isToggled())
             type = EnumMail.REMITTANCE;
@@ -260,8 +254,9 @@ public class SendingGUISection extends AbstractGUISection {
             else
                 type = EnumMail.PACKAGE;
         }   
-        this.latestMessage = new Message(
+        this.latestMessage = new Mail(
                 type, 
+                UUID.randomUUID(),//unused
                 ClientReference.getClientPlayer().getName(), 
                 this.subjectTextField.getTypedText(), 
                 this.messageTextBoxField.getTypedText());

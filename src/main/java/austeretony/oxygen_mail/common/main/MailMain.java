@@ -16,10 +16,12 @@ import austeretony.oxygen.common.privilege.api.Privilege;
 import austeretony.oxygen.common.privilege.api.PrivilegeProviderServer;
 import austeretony.oxygen.common.privilege.api.PrivilegedGroup;
 import austeretony.oxygen.common.sync.gui.api.AdvancedGUIHandlerServer;
+import austeretony.oxygen.common.update.UpdateAdaptersManager;
 import austeretony.oxygen_mail.client.MailManagerClient;
 import austeretony.oxygen_mail.client.MailMenuHandlerClient;
 import austeretony.oxygen_mail.client.command.MailArgumentExecutorClient;
 import austeretony.oxygen_mail.client.event.MailEventsClient;
+import austeretony.oxygen_mail.client.gui.mail.MailMenuGUIScreen;
 import austeretony.oxygen_mail.client.input.MailKeyHandler;
 import austeretony.oxygen_mail.common.ItemsBlackList;
 import austeretony.oxygen_mail.common.MailManagerServer;
@@ -28,6 +30,7 @@ import austeretony.oxygen_mail.common.config.MailConfig;
 import austeretony.oxygen_mail.common.event.MailEventsServer;
 import austeretony.oxygen_mail.common.network.server.SPMessageOperation;
 import austeretony.oxygen_mail.common.network.server.SPSendMessage;
+import austeretony.oxygen_mail.common.update.MailUpdateAdapter;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -38,7 +41,7 @@ import net.minecraftforge.fml.relauncher.Side;
         modid = MailMain.MODID, 
         name = MailMain.NAME, 
         version = MailMain.VERSION,
-        dependencies = "required-after:oxygen@[0.8.0,);",//TODO Always check required Oxygen version before build
+        dependencies = "required-after:oxygen@[0.8.2,);",//TODO Always check required Oxygen version before build
         certificateFingerprint = "@FINGERPRINT@",
         updateJSON = MailMain.VERSIONS_FORGE_URL)
 public class MailMain {
@@ -46,8 +49,8 @@ public class MailMain {
     public static final String 
     MODID = "oxygen_mail",
     NAME = "Oxygen: Mail",
-    VERSION = "0.8.0",
-    VERSION_CUSTOM = VERSION + ":alpha:0",
+    VERSION = "0.8.1",
+    VERSION_CUSTOM = VERSION + ":beta:0",
     GAME_VERSION = "1.12.2",
     VERSIONS_FORGE_URL = "https://raw.githubusercontent.com/AustereTony-MCMods/Oxygen-Merchants/info/mod_versions_forge.json";
 
@@ -67,6 +70,7 @@ public class MailMain {
         OxygenHelperServer.registerConfig(new MailConfig());
         if (event.getSide() == Side.CLIENT)
             CommandOxygenClient.registerArgumentExecutor(new MailArgumentExecutorClient("mail", true));
+        UpdateAdaptersManager.register(new MailUpdateAdapter());//TODO for 0.8.1b - removes all old data
     }
 
     @EventHandler
@@ -79,11 +83,13 @@ public class MailMain {
         ItemsBlackList.create(CommonReference.getGameFolder() + "/config/oxygen/mail/items_blacklist.json");
         if (event.getSide() == Side.CLIENT) {
             MailManagerClient.create();
-            CommonReference.registerEvent(new MailKeyHandler());
             CommonReference.registerEvent(new MailEventsClient());
+            if (!OxygenGUIHelper.isOxygenMenuEnabled())
+                CommonReference.registerEvent(new MailKeyHandler());
             OxygenGUIHelper.registerScreenId(MAIL_MENU_SCREEN_ID);
             AdvancedGUIHandlerClient.registerScreen(MAIL_MENU_SCREEN_ID, new MailMenuHandlerClient());
             OxygenHelperClient.registerNotificationIcon(INCOMING_MESSAGE_NOTIFICATION_ID, OxygenGUITextures.ENVELOPE_ICONS);
+            OxygenGUIHelper.registerOxygenMenuEntry(MailMenuGUIScreen.MAIL_MENU_ENTRY);
         }
     }
 
