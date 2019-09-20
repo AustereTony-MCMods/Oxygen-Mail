@@ -1,11 +1,11 @@
 package austeretony.oxygen_mail.client.gui.mail.incoming.context;
 
-import austeretony.alternateui.screen.contextmenu.AbstractContextAction;
 import austeretony.alternateui.screen.core.GUIBaseElement;
-import austeretony.oxygen.client.core.api.ClientReference;
+import austeretony.oxygen_core.client.api.ClientReference;
+import austeretony.oxygen_core.client.gui.elements.OxygenGUIContextMenuElement.ContextMenuAction;
 import austeretony.oxygen_mail.client.gui.mail.IncomingGUISection;
 
-public class RemoveMessageContextAction extends AbstractContextAction {
+public class RemoveMessageContextAction implements ContextMenuAction {
 
     private final IncomingGUISection section;
 
@@ -14,17 +14,17 @@ public class RemoveMessageContextAction extends AbstractContextAction {
     }
 
     @Override
-    protected String getName(GUIBaseElement currElement) {
+    public String getName(GUIBaseElement currElement) {
         return ClientReference.localize("oxygen_mail.gui.context.remove");
     }
 
     @Override
-    protected boolean isValid(GUIBaseElement currElement) {
+    public boolean isValid(GUIBaseElement currElement) {
         return !this.section.getCurrentMessage().isPending();
     }
 
     @Override
-    protected void execute(GUIBaseElement currElement) {
+    public void execute(GUIBaseElement currElement) {
         this.section.openRemoveMessageCallback();
     }
 }

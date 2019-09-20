@@ -3,34 +3,33 @@ package austeretony.oxygen_mail.common.main;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import austeretony.oxygen.client.api.OxygenGUIHelper;
-import austeretony.oxygen.client.api.OxygenHelperClient;
-import austeretony.oxygen.client.command.CommandOxygenClient;
-import austeretony.oxygen.client.gui.OxygenGUITextures;
-import austeretony.oxygen.client.sync.gui.api.AdvancedGUIHandlerClient;
-import austeretony.oxygen.common.api.OxygenHelperServer;
-import austeretony.oxygen.common.api.network.OxygenNetwork;
-import austeretony.oxygen.common.core.api.CommonReference;
-import austeretony.oxygen.common.main.OxygenMain;
-import austeretony.oxygen.common.privilege.api.Privilege;
-import austeretony.oxygen.common.privilege.api.PrivilegeProviderServer;
-import austeretony.oxygen.common.privilege.api.PrivilegedGroup;
-import austeretony.oxygen.common.sync.gui.api.AdvancedGUIHandlerServer;
-import austeretony.oxygen.common.update.UpdateAdaptersManager;
+import austeretony.oxygen_core.client.api.OxygenGUIHelper;
+import austeretony.oxygen_core.client.api.OxygenHelperClient;
+import austeretony.oxygen_core.client.command.CommandOxygenClient;
+import austeretony.oxygen_core.common.api.CommonReference;
+import austeretony.oxygen_core.common.api.OxygenHelperCommon;
+import austeretony.oxygen_core.common.main.OxygenMain;
+import austeretony.oxygen_core.common.privilege.PrivilegeImpl;
+import austeretony.oxygen_core.common.privilege.PrivilegedGroupImpl;
+import austeretony.oxygen_core.server.api.OxygenHelperServer;
+import austeretony.oxygen_core.server.api.PrivilegeProviderServer;
+import austeretony.oxygen_core.server.api.RequestsFilterHelper;
+import austeretony.oxygen_mail.client.MailDataSyncHandlerClient;
 import austeretony.oxygen_mail.client.MailManagerClient;
-import austeretony.oxygen_mail.client.MailMenuHandlerClient;
+import austeretony.oxygen_mail.client.MailStatusMessagesHandler;
 import austeretony.oxygen_mail.client.command.MailArgumentExecutorClient;
 import austeretony.oxygen_mail.client.event.MailEventsClient;
 import austeretony.oxygen_mail.client.gui.mail.MailMenuGUIScreen;
 import austeretony.oxygen_mail.client.input.MailKeyHandler;
-import austeretony.oxygen_mail.common.ItemsBlackList;
-import austeretony.oxygen_mail.common.MailManagerServer;
-import austeretony.oxygen_mail.common.MailMenuHandlerServer;
 import austeretony.oxygen_mail.common.config.MailConfig;
-import austeretony.oxygen_mail.common.event.MailEventsServer;
+import austeretony.oxygen_mail.common.network.client.CPAttachmentReceived;
+import austeretony.oxygen_mail.common.network.client.CPMessageRemoved;
+import austeretony.oxygen_mail.common.network.client.CPMessageSent;
 import austeretony.oxygen_mail.common.network.server.SPMessageOperation;
 import austeretony.oxygen_mail.common.network.server.SPSendMessage;
-import austeretony.oxygen_mail.common.update.MailUpdateAdapter;
+import austeretony.oxygen_mail.server.MailDataSyncHandlerServer;
+import austeretony.oxygen_mail.server.MailManagerServer;
+import austeretony.oxygen_mail.server.event.MailEventsServer;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -41,7 +40,7 @@ import net.minecraftforge.fml.relauncher.Side;
         modid = MailMain.MODID, 
         name = MailMain.NAME, 
         version = MailMain.VERSION,
-        dependencies = "required-after:oxygen@[0.8.2,);",//TODO Always check required Oxygen version before build
+        dependencies = "required-after:oxygen_core@[0.9.0,);",
         certificateFingerprint = "@FINGERPRINT@",
         updateJSON = MailMain.VERSIONS_FORGE_URL)
 public class MailMain {
@@ -49,28 +48,30 @@ public class MailMain {
     public static final String 
     MODID = "oxygen_mail",
     NAME = "Oxygen: Mail",
-    VERSION = "0.8.1",
+    VERSION = "0.9.0",
     VERSION_CUSTOM = VERSION + ":beta:0",
     GAME_VERSION = "1.12.2",
     VERSIONS_FORGE_URL = "https://raw.githubusercontent.com/AustereTony-MCMods/Oxygen-Merchants/info/mod_versions_forge.json";
 
     public static final int 
-    MAIL_MOD_INDEX = 8,//Oxygen - 0, Teleportation - 1, Groups - 2, Exchange - 3, Merchants - 4, Players List - 5, Friends List - 6, Interaction - 7, Chat - 9
+    MAIL_MOD_INDEX = 8,
 
     MAIL_MENU_SCREEN_ID = 80,
 
-    INCOMING_MESSAGE_NOTIFICATION_ID = 80;
+    MAIL_DATA_ID = 80,
+
+    INCOMING_MESSAGE_NOTIFICATION_ID = 80,
+
+    MESSAGE_SENDING_REQUEST_ID = 85,
+    MESSAGE_OPERATION_REQUEST_ID = 86;
 
     public static final Logger LOGGER = LogManager.getLogger(NAME);
 
-    private static OxygenNetwork network; 
-
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        OxygenHelperServer.registerConfig(new MailConfig());
+        OxygenHelperCommon.registerConfig(new MailConfig());
         if (event.getSide() == Side.CLIENT)
             CommandOxygenClient.registerArgumentExecutor(new MailArgumentExecutorClient("mail", true));
-        UpdateAdaptersManager.register(new MailUpdateAdapter());//TODO for 0.8.1b - removes all old data
     }
 
     @EventHandler
@@ -78,47 +79,46 @@ public class MailMain {
         this.initNetwork();
         MailManagerServer.create();
         CommonReference.registerEvent(new MailEventsServer());
-        OxygenHelperServer.registerSharedDataIdentifierForScreen(MAIL_MENU_SCREEN_ID, OxygenMain.ACTIVITY_STATUS_SHARED_DATA_ID);
-        AdvancedGUIHandlerServer.registerScreen(MAIL_MENU_SCREEN_ID, new MailMenuHandlerServer());
-        ItemsBlackList.create(CommonReference.getGameFolder() + "/config/oxygen/mail/items_blacklist.json");
+        RequestsFilterHelper.registerNetworkRequest(MESSAGE_SENDING_REQUEST_ID, 1);
+        RequestsFilterHelper.registerNetworkRequest(MESSAGE_OPERATION_REQUEST_ID, 1);
+        OxygenHelperServer.registerDataSyncHandler(new MailDataSyncHandlerServer());
         if (event.getSide() == Side.CLIENT) {
             MailManagerClient.create();
             CommonReference.registerEvent(new MailEventsClient());
             if (!OxygenGUIHelper.isOxygenMenuEnabled())
                 CommonReference.registerEvent(new MailKeyHandler());
-            OxygenGUIHelper.registerScreenId(MAIL_MENU_SCREEN_ID);
-            AdvancedGUIHandlerClient.registerScreen(MAIL_MENU_SCREEN_ID, new MailMenuHandlerClient());
-            OxygenHelperClient.registerNotificationIcon(INCOMING_MESSAGE_NOTIFICATION_ID, OxygenGUITextures.ENVELOPE_ICONS);
             OxygenGUIHelper.registerOxygenMenuEntry(MailMenuGUIScreen.MAIL_MENU_ENTRY);
+            OxygenHelperClient.registerStatusMessagesHandler(new MailStatusMessagesHandler());
+            OxygenHelperClient.registerSharedDataSyncListener(MAIL_MENU_SCREEN_ID, ()->MailManagerClient.instance().getMailMenuManager().sharedDataSynchronized());
+            OxygenHelperClient.registerDataSyncHandler(new MailDataSyncHandlerClient());
         }
+        EnumMailPrivilege.register();
     }
 
     public static void addDefaultPrivileges() {
-        if (!PrivilegeProviderServer.getGroup(PrivilegedGroup.OPERATORS_GROUP.groupName).hasPrivilege(EnumMailPrivilege.MAILBOX_SIZE.toString())) {
-            PrivilegeProviderServer.addPrivileges(PrivilegedGroup.OPERATORS_GROUP.groupName, true,  
-                    new Privilege(EnumMailPrivilege.MAILBOX_SIZE.toString(), 150),
+        if (!PrivilegeProviderServer.getGroup(PrivilegedGroupImpl.OPERATORS_GROUP.groupName).hasPrivilege(EnumMailPrivilege.MAILBOX_SIZE.toString())) {
+            PrivilegeProviderServer.addPrivileges(PrivilegedGroupImpl.OPERATORS_GROUP.groupName, true,  
+                    new PrivilegeImpl(EnumMailPrivilege.MAILBOX_SIZE.toString(), 150),
 
-                    new Privilege(EnumMailPrivilege.MAIL_SENDING_DELAY.toString(), 10),
-                    new Privilege(EnumMailPrivilege.REMITTANCE_MAX_VALUE.toString(), 1000000),
-                    new Privilege(EnumMailPrivilege.PACKAGE_MAX_AMOUNT.toString(), 1000),
-                    new Privilege(EnumMailPrivilege.PACKAGE_WITH_COD_MAX_VALUE.toString(), 100000),
+                    new PrivilegeImpl(EnumMailPrivilege.MAIL_SENDING_DELAY_SECONDS.toString(), 10),
+                    new PrivilegeImpl(EnumMailPrivilege.REMITTANCE_MAX_VALUE.toString(), 1_000_000L),
+                    new PrivilegeImpl(EnumMailPrivilege.PACKAGE_MAX_AMOUNT.toString(), 1000),
+                    new PrivilegeImpl(EnumMailPrivilege.PACKAGE_WITH_COD_MAX_VALUE.toString(), 100_000L),
 
-                    new Privilege(EnumMailPrivilege.LETTER_POSTAGE_VALUE.toString(), 0),
-                    new Privilege(EnumMailPrivilege.REMITTANCE_POSTAGE_PERCENT.toString(), 0),
-                    new Privilege(EnumMailPrivilege.PACKAGE_POSTAGE_VALUE.toString(), 0),
-                    new Privilege(EnumMailPrivilege.PACKAGE_WITH_COD_POSTAGE_PERCENT.toString(), 0));
-            LOGGER.info("Default <{}> group privileges added.", PrivilegedGroup.OPERATORS_GROUP.groupName);
+                    new PrivilegeImpl(EnumMailPrivilege.LETTER_POSTAGE_VALUE.toString(), 0L),
+                    new PrivilegeImpl(EnumMailPrivilege.REMITTANCE_POSTAGE_PERCENT.toString(), 0),
+                    new PrivilegeImpl(EnumMailPrivilege.PACKAGE_POSTAGE_VALUE.toString(), 0L),
+                    new PrivilegeImpl(EnumMailPrivilege.PACKAGE_WITH_COD_POSTAGE_PERCENT.toString(), 0));
+            LOGGER.info("Default <{}> group privileges added.", PrivilegedGroupImpl.OPERATORS_GROUP.groupName);
         }
     }
 
     private void initNetwork() {
-        network = OxygenHelperServer.createNetworkHandler(MODID);
+        OxygenMain.network().registerPacket(CPMessageSent.class);
+        OxygenMain.network().registerPacket(CPMessageRemoved.class);
+        OxygenMain.network().registerPacket(CPAttachmentReceived.class);
 
-        network.registerPacket(SPMessageOperation.class);
-        network.registerPacket(SPSendMessage.class);
-    }
-
-    public static OxygenNetwork network() {
-        return network;
+        OxygenMain.network().registerPacket(SPMessageOperation.class);
+        OxygenMain.network().registerPacket(SPSendMessage.class);
     }
 }

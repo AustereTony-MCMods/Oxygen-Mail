@@ -2,36 +2,40 @@ package austeretony.oxygen_mail.common.config;
 
 import java.util.List;
 
-import austeretony.oxygen.common.api.config.AbstractConfigHolder;
-import austeretony.oxygen.common.api.config.ConfigValue;
-import austeretony.oxygen.common.core.api.CommonReference;
+import austeretony.oxygen_core.common.EnumValueType;
+import austeretony.oxygen_core.common.api.CommonReference;
+import austeretony.oxygen_core.common.api.config.AbstractConfigHolder;
+import austeretony.oxygen_core.common.api.config.ConfigValueImpl;
+import austeretony.oxygen_core.common.config.ConfigValue;
 import austeretony.oxygen_mail.common.main.MailMain;
 
 public class MailConfig extends AbstractConfigHolder {
 
     public static final ConfigValue
-    MAILBOX_SIZE = new ConfigValue(ConfigValue.EnumValueType.INT, "main", "mailbox_size"),
+    MAIL_SAVE_DELAY_MINUTES = new ConfigValueImpl(EnumValueType.INT, "setup", "mail_save_delay_minutes"),
 
-    SERVICE_LETTER_EXPIRE_TIME = new ConfigValue(ConfigValue.EnumValueType.INT, "main", "service_letter_expire_time_hours"),
-    LETTER_EXPIRE_TIME = new ConfigValue(ConfigValue.EnumValueType.INT, "main", "letter_expire_time_hours"),
-    SERVICE_REMITTANCE_EXPIRE_TIME = new ConfigValue(ConfigValue.EnumValueType.INT, "main", "service_remittance_expire_time_hours"),
-    REMITTANCE_EXPIRE_TIME = new ConfigValue(ConfigValue.EnumValueType.INT, "main", "remittance_expire_time_hours"),
-    SERVICE_PACKAGE_EXPIRE_TIME = new ConfigValue(ConfigValue.EnumValueType.INT, "main", "service_package_expire_time_hours"),
-    PACKAGE_EXPIRE_TIME = new ConfigValue(ConfigValue.EnumValueType.INT, "main", "package_expire_time_hours"),
-    PACKAGE_WITH_COD_EXPIRE_TIME = new ConfigValue(ConfigValue.EnumValueType.INT, "main", "package_with_cod_expire_time_hours"),
+    MAILBOX_SIZE = new ConfigValueImpl(EnumValueType.INT, "main", "mailbox_size"),
 
-    MAIL_SENDING_DELAY = new ConfigValue(ConfigValue.EnumValueType.INT, "main", "mail_sending_delay_seconds"),
-    REMITTANCE_MAX_VALUE = new ConfigValue(ConfigValue.EnumValueType.INT, "main", "remittance_max_value"),
-    PACKAGE_MAX_AMOUNT = new ConfigValue(ConfigValue.EnumValueType.INT, "main", "package_max_amount"),
-    PACKAGE_WITH_COD_MAX_VALUE = new ConfigValue(ConfigValue.EnumValueType.INT, "main", "package_with_cod_max_value"),
-            
-    LETTER_POSTAGE_VALUE = new ConfigValue(ConfigValue.EnumValueType.INT, "main", "letter_postage_value"),
-    REMITTANCE_POSTAGE_PERCENT = new ConfigValue(ConfigValue.EnumValueType.INT, "main", "remittance_postage_percent"),
-    PACKAGE_POSTAGE_VALUE = new ConfigValue(ConfigValue.EnumValueType.INT, "main", "package_postage_value"),
-    PACKAGE_WITH_COD_POSTAGE_PERCENT = new ConfigValue(ConfigValue.EnumValueType.INT, "main", "package_with_cod_postage_percent");
+    SYSTEM_LETTER_EXPIRE_TIME_HOURS = new ConfigValueImpl(EnumValueType.INT, "main", "system_letter_expire_time_hours"),
+    LETTER_EXPIRE_TIME_HOURS = new ConfigValueImpl(EnumValueType.INT, "main", "letter_expire_time_hours"),
+    SYSTEM_REMITTANCE_EXPIRE_TIME_HOURS = new ConfigValueImpl(EnumValueType.INT, "main", "system_remittance_expire_time_hours"),
+    REMITTANCE_EXPIRE_TIME_HOURS = new ConfigValueImpl(EnumValueType.INT, "main", "remittance_expire_time_hours"),
+    SYSTEM_PACKAGE_EXPIRE_TIME_HOURS = new ConfigValueImpl(EnumValueType.INT, "main", "system_package_expire_time_hours"),
+    PACKAGE_EXPIRE_TIME_HOURS = new ConfigValueImpl(EnumValueType.INT, "main", "package_expire_time_hours"),
+    PACKAGE_WITH_COD_EXPIRE_TIME_HOURS = new ConfigValueImpl(EnumValueType.INT, "main", "package_with_cod_expire_time_hours"),
+
+    MAIL_SENDING_DELAY_SECONDS = new ConfigValueImpl(EnumValueType.INT, "main", "mail_sending_delay_seconds"),
+    REMITTANCE_MAX_VALUE = new ConfigValueImpl(EnumValueType.LONG, "main", "remittance_max_value"),
+    PACKAGE_MAX_AMOUNT = new ConfigValueImpl(EnumValueType.INT, "main", "package_max_amount"),
+    PACKAGE_WITH_COD_MAX_VALUE = new ConfigValueImpl(EnumValueType.LONG, "main", "package_with_cod_max_value"),
+
+    LETTER_POSTAGE_VALUE = new ConfigValueImpl(EnumValueType.LONG, "main", "letter_postage_value"),
+    REMITTANCE_POSTAGE_PERCENT = new ConfigValueImpl(EnumValueType.INT, "main", "remittance_postage_percent"),
+    PACKAGE_POSTAGE_VALUE = new ConfigValueImpl(EnumValueType.LONG, "main", "package_postage_value"),
+    PACKAGE_WITH_COD_POSTAGE_PERCENT = new ConfigValueImpl(EnumValueType.INT, "main", "package_with_cod_postage_percent");
 
     @Override
-    public String getModId() {
+    public String getDomain() {
         return MailMain.MODID;
     }
 
@@ -52,17 +56,19 @@ public class MailConfig extends AbstractConfigHolder {
 
     @Override
     public void getValues(List<ConfigValue> values) {
+        values.add(MAIL_SAVE_DELAY_MINUTES);
+
         values.add(MAILBOX_SIZE);
 
-        values.add(SERVICE_LETTER_EXPIRE_TIME);
-        values.add(LETTER_EXPIRE_TIME);
-        values.add(SERVICE_REMITTANCE_EXPIRE_TIME);
-        values.add(REMITTANCE_EXPIRE_TIME);
-        values.add(SERVICE_PACKAGE_EXPIRE_TIME);
-        values.add(PACKAGE_EXPIRE_TIME);
-        values.add(PACKAGE_WITH_COD_EXPIRE_TIME);
+        values.add(SYSTEM_LETTER_EXPIRE_TIME_HOURS);
+        values.add(LETTER_EXPIRE_TIME_HOURS);
+        values.add(SYSTEM_REMITTANCE_EXPIRE_TIME_HOURS);
+        values.add(REMITTANCE_EXPIRE_TIME_HOURS);
+        values.add(SYSTEM_PACKAGE_EXPIRE_TIME_HOURS);
+        values.add(PACKAGE_EXPIRE_TIME_HOURS);
+        values.add(PACKAGE_WITH_COD_EXPIRE_TIME_HOURS);
 
-        values.add(MAIL_SENDING_DELAY);
+        values.add(MAIL_SENDING_DELAY_SECONDS);
         values.add(REMITTANCE_MAX_VALUE);
         values.add(PACKAGE_MAX_AMOUNT);
         values.add(PACKAGE_WITH_COD_MAX_VALUE);

@@ -1,15 +1,14 @@
 package austeretony.oxygen_mail.client.gui.mail.incoming.context;
 
-import austeretony.alternateui.screen.contextmenu.AbstractContextAction;
 import austeretony.alternateui.screen.core.GUIBaseElement;
-import austeretony.oxygen.client.api.WatcherHelperClient;
-import austeretony.oxygen.client.core.api.ClientReference;
-import austeretony.oxygen.common.itemstack.InventoryHelper;
-import austeretony.oxygen.common.main.OxygenPlayerData;
+import austeretony.oxygen_core.client.api.ClientReference;
+import austeretony.oxygen_core.client.gui.elements.OxygenGUIContextMenuElement.ContextMenuAction;
+import austeretony.oxygen_core.common.inventory.InventoryHelper;
 import austeretony.oxygen_mail.client.gui.mail.IncomingGUISection;
-import austeretony.oxygen_mail.common.main.EnumMail;
+import austeretony.oxygen_mail.common.EnumMail;
+import net.minecraft.item.ItemStack;
 
-public class TakeAttachmentContextAction extends AbstractContextAction {
+public class TakeAttachmentContextAction implements ContextMenuAction {
 
     private final IncomingGUISection section;
 
@@ -18,30 +17,32 @@ public class TakeAttachmentContextAction extends AbstractContextAction {
     }
 
     @Override
-    protected String getName(GUIBaseElement currElement) {
-        return this.section.getCurrentMessage().type == EnumMail.PACKAGE_WITH_COD ? ClientReference.localize("oxygen_mail.gui.context.pay") : ClientReference.localize("oxygen_mail.gui.context.take");
+    public String getName(GUIBaseElement currElement) {
+        return this.section.getCurrentMessage().getType() == EnumMail.PACKAGE_WITH_COD ? 
+                ClientReference.localize("oxygen_mail.gui.context.pay") : ClientReference.localize("oxygen_mail.gui.context.take");
     }
 
     @Override
-    protected boolean isValid(GUIBaseElement currElement) {
+    public boolean isValid(GUIBaseElement currElement) {
         if (this.section.getCurrentMessage().isPending()) {
-            EnumMail type = this.section.getCurrentMessage().type;
+            EnumMail type = this.section.getCurrentMessage().getType();
             if (type == EnumMail.PACKAGE 
-                    || type == EnumMail.SERVICE_PACKAGE 
+                    || type == EnumMail.SYSTEM_PACKAGE 
                     || type == EnumMail.PACKAGE_WITH_COD) {
                 if (type == EnumMail.PACKAGE_WITH_COD 
-                        && WatcherHelperClient.getInt(OxygenPlayerData.CURRENCY_COINS_WATCHER_ID) < this.section.getCurrentMessage().getCurrency())
+                        && this.section.getBalanceElement().getValue() < this.section.getCurrentMessage().getCurrency())
                     return false;
-                if (InventoryHelper.haveEnoughSpace(ClientReference.getClientPlayer(), this.section.getCurrentMessage().getParcel().amount))
+                ItemStack itemStack = this.section.getCurrentMessage().getParcel().stackWrapper.getCachedItemStack();
+                if (InventoryHelper.haveEnoughSpace(ClientReference.getClientPlayer(), this.section.getCurrentMessage().getParcel().amount, itemStack.getMaxStackSize()))
                     return true;
-            } else//remittance
+            } else
                 return true;
         }
         return false;
     }
 
     @Override
-    protected void execute(GUIBaseElement currElement) {
+    public void execute(GUIBaseElement currElement) {
         this.section.openTakeAttachmentCallback();
     }
 }

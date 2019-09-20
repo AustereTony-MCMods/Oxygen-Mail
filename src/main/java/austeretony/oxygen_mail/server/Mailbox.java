@@ -1,4 +1,4 @@
-package austeretony.oxygen_mail.common.main;
+package austeretony.oxygen_mail.server;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -9,17 +9,19 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import austeretony.oxygen.common.privilege.api.PrivilegeProviderServer;
-import austeretony.oxygen.util.StreamUtils;
+import austeretony.oxygen_core.common.util.StreamUtils;
+import austeretony.oxygen_core.server.api.PrivilegeProviderServer;
+import austeretony.oxygen_mail.common.Mail;
 import austeretony.oxygen_mail.common.config.MailConfig;
+import austeretony.oxygen_mail.common.main.EnumMailPrivilege;
 
 public class Mailbox {
 
     public final UUID playerUUID;
 
-    private final Map<Long, Mail> mail = new ConcurrentHashMap<Long, Mail>();
+    private final Map<Long, Mail> mail = new ConcurrentHashMap<>();
 
-    private long lastMessageSendingTime;
+    private long nextSendingTimeMillis;
 
     private boolean newMailExist;
 
@@ -47,9 +49,7 @@ public class Mailbox {
         return this.mail.get(messageId);
     }
 
-    public void addMessage(Mail message) {
-        if (this.mail.containsKey(message.getId()))//TODO debug
-            MailMain.LOGGER.error("ADDING MESSAGE TO MAILBOX. Attempt adding message with existing messageId! FATAL ISSUE! Id creation algorithm improvements required! Player UUID: {}, Sender: {}", this.playerUUID, message.senderName);                           
+    public void addMessage(Mail message) {                       
         this.mail.put(message.getId(), message);
         this.newMailExist = true;
     }
@@ -58,21 +58,21 @@ public class Mailbox {
         this.mail.remove(messageId);
     }
 
-    public boolean canSendMessage() {
-        return System.currentTimeMillis() - this.lastMessageSendingTime 
-                >= PrivilegeProviderServer.getPrivilegeValue(this.playerUUID, EnumMailPrivilege.MAIL_SENDING_DELAY.toString(), MailConfig.MAIL_SENDING_DELAY.getIntValue()) * 1000;
-    }
-
-    public void updateLastMessageSendingTime() {
-        this.lastMessageSendingTime = System.currentTimeMillis();
-    }
-
     public int getMaxCapacity() {
-        return PrivilegeProviderServer.getPrivilegeValue(this.playerUUID, EnumMailPrivilege.MAILBOX_SIZE.toString(), MailConfig.MAILBOX_SIZE.getIntValue());
+        return PrivilegeProviderServer.getValue(this.playerUUID, EnumMailPrivilege.MAILBOX_SIZE.toString(), MailConfig.MAILBOX_SIZE.getIntValue());
     }
 
     public boolean canAcceptMessages() {
         return this.getMessagesAmount() < this.getMaxCapacity();
+    }
+
+    public boolean canSendMessage() {
+        return System.currentTimeMillis() >= this.nextSendingTimeMillis;
+    }
+
+    public void updateLastMessageSendingTime() {
+        this.nextSendingTimeMillis = System.currentTimeMillis() 
+                + PrivilegeProviderServer.getValue(this.playerUUID, EnumMailPrivilege.MAIL_SENDING_DELAY_SECONDS.toString(), MailConfig.MAIL_SENDING_DELAY_SECONDS.getIntValue()) * 1000;
     }
 
     public boolean isNewMailExist() {
@@ -81,6 +81,12 @@ public class Mailbox {
 
     public void mailboxSynchronized() {
         this.newMailExist = false;
+    }
+
+    public  long getNewId(long messageId) {
+        while (this.mail.containsKey(messageId))
+            messageId += 1L;
+        return messageId;
     }
 
     public void write(BufferedOutputStream bos) throws IOException {
@@ -97,7 +103,8 @@ public class Mailbox {
         int amount = StreamUtils.readShort(bis);
         Mail message;
         for (int i = 0; i < amount; i++) {
-            message = Mail.read(bis);
+            message = new Mail();
+            message.read(bis);
             mailbox.mail.put(message.getId(), message);
         }
         return mailbox;

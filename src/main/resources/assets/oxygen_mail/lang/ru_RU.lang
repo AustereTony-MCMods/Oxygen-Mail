@@ -11,6 +11,7 @@ oxygen_mail.gui.context.remove=Удалить
 
 oxygen_mail.gui.mail.title=Почта
 
+oxygen_mail.gui.mail.selectItemButton=Выбрать
 oxygen_mail.gui.mail.sendButton=Отправить
 
 oxygen_mail.gui.mail.incoming=Входящие
@@ -26,6 +27,7 @@ oxygen_mail.gui.mail.callback.returnAttachment=Вернуть Вложение
 oxygen_mail.gui.mail.callback.returnAttachment.request=Вернуть отправителю?
 oxygen_mail.gui.mail.callback.removeMessage=Удалить Письмо
 oxygen_mail.gui.mail.callback.removeMessage.request=Письмо будет удалено.
+oxygen_mail.gui.mail.callback.selectItem=Выбор Предмета
 oxygen_mail.gui.mail.callback.sendMessage=Отправка
 
 oxygen_mail.gui.mail.sendTo=Получатель:
@@ -39,16 +41,10 @@ oxygen_mail.gui.mail.cod=Наложенный Платёж
 oxygen_mail.gui.mail.package=Посылка
 
 oxygen_mail.gui.mail.msg.sender=Отправитель: %s
-oxygen_mail.gui.mail.msg.expires=Ист.: %s
+oxygen_mail.gui.mail.msg.expires=Истекает: %s
 oxygen_mail.gui.mail.msg.received=Получено: %s назад
 
 oxygen_mail.gui.neverExpires=Никогда
-
-oxygen_mail.chat_message.messageSent=Сообщение отправлено.
-oxygen_mail.chat_message.messageNotSent=Сообщение не отправлено.
-oxygen_mail.chat_message.attachmentReceived=Вложение получено.
-oxygen_mail.chat_message.attachmentReturned=Вложение возвращено отправителю.
-oxygen_mail.chat_message.messageRemoved=Сообщение удалено.
 
 oxygen_mail.command.dataReset=Данные <oxygen: mail> сброшены для клиента.
 
@@ -67,6 +63,14 @@ mail.message.packageReturn=Возврат невостребованной по�
 mail.cod.pay.s=Оплата
 mail.cod.pay.m=Игрок оплатил наложенный платёж.
 
-oxygen_mail.tooltip.postage.value=%s за отправку
-oxygen_mail.tooltip.postage.percent=%s процентов от суммы
-oxygen_mail.tooltip.postage.cod=%s за отправку и %s процентов от суммы наложенного платежа
+oxygen_mail.sorting.receiveTime=Время Получения
+oxygen_mail.sorting.subject=Название
+
+oxygen_mail.status.playerNotFound=Игрок не найден
+oxygen_mail.status.parcelDamaged=Посылка повреждена
+oxygen_mail.status.itemBlackListed=Предмет в чёрном списке
+oxygen_mail.status.messageSent=Письмо отправлено
+oxygen_mail.status.messageSendingFailed=Сбой при отправке письма
+oxygen_mail.status.attachmentReceived=Вложение получено
+oxygen_mail.status.messageReturned=Вложение возвращено отправителю
+oxygen_mail.status.messageRemoved=Сообщение удалено

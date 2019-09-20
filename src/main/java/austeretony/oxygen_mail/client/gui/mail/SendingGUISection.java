@@ -1,64 +1,58 @@
 package austeretony.oxygen_mail.client.gui.mail;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
-import austeretony.alternateui.screen.browsing.GUIScroller;
-import austeretony.alternateui.screen.button.GUIButton;
-import austeretony.alternateui.screen.button.GUICheckBoxButton;
-import austeretony.alternateui.screen.button.GUISlider;
 import austeretony.alternateui.screen.callback.AbstractGUICallback;
 import austeretony.alternateui.screen.core.AbstractGUISection;
 import austeretony.alternateui.screen.core.GUIBaseElement;
-import austeretony.alternateui.screen.panel.GUIButtonPanel;
 import austeretony.alternateui.screen.text.GUITextBoxField;
-import austeretony.alternateui.screen.text.GUITextField;
-import austeretony.alternateui.screen.text.GUITextLabel;
-import austeretony.alternateui.util.EnumGUIOrientation;
-import austeretony.oxygen.client.api.WatcherHelperClient;
-import austeretony.oxygen.client.core.api.ClientReference;
-import austeretony.oxygen.client.gui.BalanceGUIElement;
-import austeretony.oxygen.client.gui.OxygenGUITextures;
-import austeretony.oxygen.client.gui.settings.GUISettings;
-import austeretony.oxygen.client.privilege.api.PrivilegeProviderClient;
-import austeretony.oxygen.common.itemstack.InventoryHelper;
-import austeretony.oxygen.common.main.OxygenPlayerData;
-import austeretony.oxygen.common.main.OxygenSoundEffects;
-import austeretony.oxygen.util.MathUtils;
-import austeretony.oxygen_mail.client.MailManagerClient;
-import austeretony.oxygen_mail.client.gui.mail.sending.InventoryStackGUIButton;
+import austeretony.alternateui.util.EnumGUIAlignment;
+import austeretony.oxygen_core.client.api.ClientReference;
+import austeretony.oxygen_core.client.api.PrivilegeProviderClient;
+import austeretony.oxygen_core.client.gui.elements.CurrencyValueGUIElement;
+import austeretony.oxygen_core.client.gui.elements.InventoryLoadGUIElement;
+import austeretony.oxygen_core.client.gui.elements.OxygenCheckBoxGUIButton;
+import austeretony.oxygen_core.client.gui.elements.OxygenGUIButton;
+import austeretony.oxygen_core.client.gui.elements.OxygenGUIText;
+import austeretony.oxygen_core.client.gui.elements.OxygenGUITextField;
+import austeretony.oxygen_core.client.gui.elements.SectionsGUIDDList;
+import austeretony.oxygen_core.client.gui.elements.UsernameGUITextField;
+import austeretony.oxygen_core.client.gui.settings.GUISettings;
+import austeretony.oxygen_core.common.util.MathUtils;
+import austeretony.oxygen_mail.client.gui.mail.sending.InventoryItemGUIButton;
+import austeretony.oxygen_mail.client.gui.mail.sending.SendingBackgroundGUIFiller;
+import austeretony.oxygen_mail.client.gui.mail.sending.callback.SelectItemGUICallback;
 import austeretony.oxygen_mail.client.gui.mail.sending.callback.SendMessageGUICallback;
+import austeretony.oxygen_mail.common.EnumMail;
+import austeretony.oxygen_mail.common.Mail;
+import austeretony.oxygen_mail.common.Parcel;
 import austeretony.oxygen_mail.common.config.MailConfig;
-import austeretony.oxygen_mail.common.main.EnumMail;
 import austeretony.oxygen_mail.common.main.EnumMailPrivilege;
-import austeretony.oxygen_mail.common.main.Mail;
-import austeretony.oxygen_mail.common.main.Parcel;
 import net.minecraft.item.ItemStack;
 
 public class SendingGUISection extends AbstractGUISection {
 
     private final MailMenuGUIScreen screen;
 
-    private GUIButton incomingSectionButton, sendButton;
+    private OxygenGUIButton selectItemButton, sendButton;
 
-    private GUITextField addresseeTextField, subjectTextField, currencyTextField, packageAmountTextField;
+    private UsernameGUITextField addresseeTextField;
 
-    private GUITextLabel addresseeStatusTextLabel;
+    private OxygenGUITextField subjectTextField, currencyTextField, packageAmountTextField;
 
     private GUITextBoxField messageTextBoxField;
 
-    private GUICheckBoxButton enableRemittanceButton, enableCODButton, enablePackageButton;
+    private OxygenCheckBoxGUIButton enableRemittanceButton, enableCODButton, enablePackageButton;
 
-    private BalanceGUIElement balanceElement;
+    private InventoryLoadGUIElement inventoryLoadElement;
 
-    private GUIButtonPanel itemsPanel;
+    private CurrencyValueGUIElement balanceElement;
 
-    private InventoryStackGUIButton currentStackButton;
+    private AbstractGUICallback selectItemCallback, sendMessageCallback;
 
-    private AbstractGUICallback sendMessageCallback;
+    //cache
 
-    private Mail latestMessage;
+    private InventoryItemGUIButton currentItemButton;
 
     private final String 
     playerFoundStr = ClientReference.localize("oxygen_mail.gui.mail.playerOnline"),
@@ -72,78 +66,44 @@ public class SendingGUISection extends AbstractGUISection {
     @Override
     public void init() {
         this.addElement(new SendingBackgroundGUIFiller(0, 0, this.getWidth(), this.getHeight()));
-        this.addElement(new GUITextLabel(2, 4).setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.title"), false, GUISettings.instance().getTitleScale()));
+        this.addElement(new OxygenGUIText(4, 5, ClientReference.localize("oxygen_mail.gui.mail.title"), GUISettings.get().getTitleScale(), GUISettings.get().getEnabledTextColor()));
 
-        this.addElement(this.incomingSectionButton = new GUIButton(this.getWidth() - 28, 1, 10, 10).setTexture(OxygenGUITextures.ENVELOPE_ICONS, 10, 10).initSimpleTooltip(ClientReference.localize("oxygen_mail.gui.mail.incoming"), GUISettings.instance().getTooltipScale())); 
-        this.addElement(new GUIButton(this.getWidth() - 12, 1, 10, 10).setSound(OxygenSoundEffects.BUTTON_CLICK.soundEvent).setTexture(OxygenGUITextures.PENCIL_ICONS, 10, 10).initSimpleTooltip(ClientReference.localize("oxygen_mail.gui.mail.sending"), GUISettings.instance().getTooltipScale()).toggle());
+        this.addElement(new OxygenGUIText(6, 40, ClientReference.localize("oxygen_mail.gui.mail.subject"), GUISettings.get().getSubTextScale(), GUISettings.get().getEnabledTextColorDark()));
+        this.addElement(this.subjectTextField = new OxygenGUITextField(6, 47, 120, 9, Mail.MESSAGE_SUBJECT_MAX_LENGTH, "", 3, false, - 1));
+        this.addElement(this.messageTextBoxField = new GUITextBoxField(6, 58, 120, 84, Mail.MESSAGE_MAX_LENGTH).setLineOffset(2).setTextScale(GUISettings.get().getSubTextScale()).enableDynamicBackground().cancelDraggedElementLogic(true));
 
-        this.addElement(new GUITextLabel(2, 14).setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.sendTo"), false, GUISettings.instance().getSubTextScale()));
-        this.addElement(this.addresseeTextField = new GUITextField(2, 22, 120, 9, 20).enableDynamicBackground().setDisplayText("...", false, GUISettings.instance().getSubTextScale()).setLineOffset(3).cancelDraggedElementLogic());
-        this.addElement(this.addresseeStatusTextLabel = new GUITextLabel(2, 31).setTextScale(GUISettings.instance().getSubTextScale()).setEnabledTextColor(GUISettings.instance().getEnabledTextColorDark()).disableFull());
+        this.addElement(new OxygenGUIText(6, 18, ClientReference.localize("oxygen_mail.gui.mail.sendTo"), GUISettings.get().getSubTextScale(), GUISettings.get().getEnabledTextColorDark()));
+        this.addElement(this.addresseeTextField = new UsernameGUITextField(6, 25, 120));
+        this.addresseeTextField.disable();
 
-        this.addElement(new GUITextLabel(2, 40).setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.subject"), false, GUISettings.instance().getSubTextScale()));
-        this.addElement(this.subjectTextField = new GUITextField(2, 48, 120, 9, Mail.MESSAGE_TITLE_MAX_LENGTH).enableDynamicBackground().setDisplayText("...", false, GUISettings.instance().getSubTextScale()).setLineOffset(3).cancelDraggedElementLogic());
+        this.addElement(new OxygenGUIText(130, 18, ClientReference.localize("oxygen_mail.gui.mail.attachment"), GUISettings.get().getTextScale(), GUISettings.get().getEnabledTextColor()));
 
-        this.addElement(this.messageTextBoxField = new GUITextBoxField(2, 60, 120, 90, Mail.MESSAGE_MAX_LENGTH).setLineOffset(2).setTextScale(GUISettings.instance().getSubTextScale()).enableDynamicBackground().cancelDraggedElementLogic());
+        this.addElement(this.enableRemittanceButton = new OxygenCheckBoxGUIButton(130, 27));    
+        this.addElement(new OxygenGUIText(139, 28, ClientReference.localize("oxygen_mail.gui.mail.remittance"), GUISettings.get().getSubTextScale(), GUISettings.get().getEnabledTextColorDark()));
 
-        this.addElement(new GUITextLabel(127, 15).setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.attachment"), false, GUISettings.instance().getTextScale()));
-        this.addElement(this.enableRemittanceButton = new GUICheckBoxButton(127, 25, 6).setSound(OxygenSoundEffects.BUTTON_CLICK.soundEvent)
-                .enableDynamicBackground(GUISettings.instance().getEnabledButtonColor(), GUISettings.instance().getDisabledButtonColor(), GUISettings.instance().getHoveredButtonColor()));        
-        this.addElement(new GUITextLabel(136, 24).setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.remittance"), false, GUISettings.instance().getSubTextScale()));
-        this.addElement(this.enableCODButton = new GUICheckBoxButton(127, 35, 6).setSound(OxygenSoundEffects.BUTTON_CLICK.soundEvent)
-                .enableDynamicBackground(GUISettings.instance().getEnabledButtonColor(), GUISettings.instance().getDisabledButtonColor(), GUISettings.instance().getHoveredButtonColor()));
-        this.addElement(new GUITextLabel(136, 34).setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.cod"), false, GUISettings.instance().getSubTextScale()));
-        this.addElement(this.currencyTextField = new GUITextField(127, 45, 50, 9, 10).enableDynamicBackground().setText("0").setTextScale(GUISettings.instance().getSubTextScale()).setLineOffset(3).cancelDraggedElementLogic().disable());
+        this.addElement(this.enableCODButton = new OxygenCheckBoxGUIButton(130, 37));
+        this.addElement(new OxygenGUIText(139, 38, ClientReference.localize("oxygen_mail.gui.mail.cod"), GUISettings.get().getSubTextScale(), GUISettings.get().getEnabledTextColorDark()));
 
-        this.addElement(this.enablePackageButton = new GUICheckBoxButton(127, 63, 6).setSound(OxygenSoundEffects.BUTTON_CLICK.soundEvent)
-                .enableDynamicBackground(GUISettings.instance().getEnabledButtonColor(), GUISettings.instance().getDisabledButtonColor(), GUISettings.instance().getHoveredButtonColor()));        
-        this.addElement(new GUITextLabel(136, 62).setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.package"), false, GUISettings.instance().getSubTextScale()));
-        this.addElement(this.packageAmountTextField = new GUITextField(127, 73, 50, 9, 4).enableDynamicBackground().setText("0").setTextScale(GUISettings.instance().getSubTextScale()).setLineOffset(3).cancelDraggedElementLogic().disable());
+        this.addElement(this.currencyTextField = new OxygenGUITextField(130, 46, 45, 9, 10, "0", 3, true, - 1));
+        this.currencyTextField.disable();
 
-        this.itemsPanel = new GUIButtonPanel(EnumGUIOrientation.VERTICAL, 125, 86, 75, 16).setButtonsOffset(1).setTextScale(GUISettings.instance().getSubTextScale());
-        this.addElement(this.itemsPanel);       
-        GUIScroller scroller = new GUIScroller(36, 4);
-        this.itemsPanel.initScroller(scroller);
-        GUISlider slider = new GUISlider(201, 86, 2, 64);
-        slider.setDynamicBackgroundColor(GUISettings.instance().getEnabledSliderColor(), GUISettings.instance().getDisabledSliderColor(), GUISettings.instance().getHoveredSliderColor());
-        scroller.initSlider(slider);
+        this.addElement(this.enablePackageButton = new OxygenCheckBoxGUIButton(130, 64));        
+        this.addElement(new OxygenGUIText(139, 65, ClientReference.localize("oxygen_mail.gui.mail.package"), GUISettings.get().getSubTextScale(), GUISettings.get().getEnabledTextColorDark()));
+        this.addElement(this.packageAmountTextField = new OxygenGUITextField(130, 73, 45, 9, 4, "0", 3, true, - 1));
+        this.addElement(this.selectItemButton = new OxygenGUIButton(130, 85, 40, 10, ClientReference.localize("oxygen_mail.gui.mail.selectItemButton")).disable());     
+        this.packageAmountTextField.disable();
 
-        this.addElement(this.sendButton = new GUIButton(4, this.getHeight() - 12, 40, 10).setSound(OxygenSoundEffects.BUTTON_CLICK.soundEvent)
-                .enableDynamicBackground(GUISettings.instance().getEnabledButtonColor(), GUISettings.instance().getDisabledButtonColor(), GUISettings.instance().getHoveredButtonColor())
-                .setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.sendButton"), true, GUISettings.instance().getButtonTextScale()).disable());     
+        this.addElement(this.sendButton = new OxygenGUIButton(6, this.getHeight() - 26, 40, 10, ClientReference.localize("oxygen_mail.gui.mail.sendButton")).disable());     
 
-        this.addElement(this.balanceElement = new BalanceGUIElement(this.getWidth() - 7, this.getHeight() - 10).setEnabledTextColor(GUISettings.instance().getEnabledTextColor())
-                .setBalance(WatcherHelperClient.getInt(OxygenPlayerData.CURRENCY_COINS_WATCHER_ID))); 
+        this.addElement(this.inventoryLoadElement = new InventoryLoadGUIElement(4, this.getHeight() - 9, EnumGUIAlignment.RIGHT));
+        this.inventoryLoadElement.setLoad(this.screen.getIncomingSection().getInventoryLoadElement().getLoad());
+        this.addElement(this.balanceElement = new CurrencyValueGUIElement(this.getWidth() - 10, this.getHeight() - 10));   
+        this.balanceElement.setValue(this.screen.getIncomingSection().getBalanceElement().getValue());
 
+        this.addElement(new SectionsGUIDDList(this.getWidth() - 4, 5, this, this.screen.getIncomingSection()));
+
+        this.selectItemCallback = new SelectItemGUICallback(this.screen, this, 140, 96).enableDefaultBackground();
         this.sendMessageCallback = new SendMessageGUICallback(this.screen, this, 140, 76).enableDefaultBackground();
-
-        this.loadInventoryItems();
-    }
-
-    private void loadInventoryItems() {
-        this.itemsPanel.reset();
-        Set<String> stacks = new HashSet<String>();//is there something better? such filter seems expensive
-        InventoryStackGUIButton button;
-        for (ItemStack itemStack : ClientReference.getClientPlayer().inventory.mainInventory) {
-            if (!itemStack.isEmpty() 
-                    && !stacks.contains(this.getKey(itemStack))) {
-                button = new InventoryStackGUIButton(itemStack);
-                button.enableDynamicBackground(GUISettings.instance().getEnabledElementColor(), GUISettings.instance().getEnabledElementColor(), GUISettings.instance().getHoveredElementColor());
-                button.setTextDynamicColor(GUISettings.instance().getEnabledTextColor(), GUISettings.instance().getDisabledTextColor(), GUISettings.instance().getHoveredTextColor());
-
-                this.itemsPanel.addButton(button);
-                stacks.add(this.getKey(itemStack));
-            }              
-        }
-        this.itemsPanel.getScroller().resetPosition();
-        this.itemsPanel.getScroller().getSlider().reset();
-    }
-
-    //TODO rewrite it for some numeric key value generation
-    private String getKey(ItemStack itemStack) {
-        //this lacks NBT tag check
-        String nbtStr = itemStack.hasTagCompound() ? itemStack.getTagCompound().toString() : "";
-        return itemStack.getItem().getRegistryName().toString() + "_" + itemStack.getMetadata() + "_" + itemStack.getItemDamage() + "_" + nbtStr;
     }
 
     @Override
@@ -154,15 +114,15 @@ public class SendingGUISection extends AbstractGUISection {
                 this.sendButton.enable();
             else
                 this.sendButton.disable();
-            if (element == this.incomingSectionButton)
-                this.screen.getIncomingSection().open();
-            if (element == this.sendButton)
+            if (element == this.selectItemButton)
+                this.selectItemCallback.open();
+            else if (element == this.sendButton)
                 this.sendMessageCallback.open();
             else if (element == this.enableRemittanceButton) {
                 if (this.enableRemittanceButton.isToggled()) {
                     this.currencyTextField.enableNumberFieldMode(MathUtils.lesserOfTwo(
-                            this.balanceElement.getBalance(), 
-                            PrivilegeProviderClient.getPrivilegeValue(EnumMailPrivilege.REMITTANCE_MAX_VALUE.toString(), MailConfig.REMITTANCE_MAX_VALUE.getIntValue())));
+                            this.balanceElement.getValue(), 
+                            PrivilegeProviderClient.getValue(EnumMailPrivilege.REMITTANCE_MAX_VALUE.toString(), MailConfig.REMITTANCE_MAX_VALUE.getLongValue())));
                     this.enableCODButton.setToggled(false);
                     this.currencyTextField.enable();
                 } else
@@ -172,76 +132,56 @@ public class SendingGUISection extends AbstractGUISection {
                 if (this.enablePackageButton.isToggled()) {
                     this.enablePackageButton.setToggled(false);
                     this.packageAmountTextField.disable();
-                    if (this.currentStackButton != null)
-                        this.currentStackButton.setToggled(false);
-                    this.currentStackButton = null;
+                    if (this.currentItemButton != null)
+                        this.currentItemButton.setToggled(false);
+                    this.currentItemButton = null;
                 }
             } else if (element == this.enableCODButton) {
                 if (this.enableCODButton.isToggled()) {
-                    this.currencyTextField.enableNumberFieldMode(PrivilegeProviderClient.getPrivilegeValue(EnumMailPrivilege.PACKAGE_WITH_COD_MAX_VALUE.toString(), MailConfig.PACKAGE_WITH_COD_MAX_VALUE.getIntValue()));
+                    this.selectItemButton.enable();
+                    this.currencyTextField.enableNumberFieldMode(PrivilegeProviderClient.getValue(EnumMailPrivilege.PACKAGE_WITH_COD_MAX_VALUE.toString(), MailConfig.PACKAGE_WITH_COD_MAX_VALUE.getLongValue()));
                     this.enableRemittanceButton.setToggled(false);
                     this.currencyTextField.enable();
-                } else
+                } else {
+                    this.selectItemButton.disable();
                     this.currencyTextField.disable();
+                }
                 this.currencyTextField.setText("0");
             } else if (element == this.enablePackageButton) {
                 if (this.enablePackageButton.isToggled()) {
-                    if (this.currentStackButton != null)
+                    this.selectItemButton.enable();
+                    if (this.currentItemButton != null)
                         this.packageAmountTextField.enable();
                 } else {
-                    if (this.currentStackButton != null)
-                        this.currentStackButton.setToggled(false);
-                    this.currentStackButton = null;
+                    this.selectItemButton.disable();
+                    if (this.currentItemButton != null)
+                        this.currentItemButton.setToggled(false);
+                    this.currentItemButton = null;
                     this.packageAmountTextField.disable();
                 }
                 this.packageAmountTextField.setText("0");
-            } else if (element instanceof InventoryStackGUIButton) {
-                if (this.enablePackageButton.isToggled()) {
-                    InventoryStackGUIButton button = (InventoryStackGUIButton) element;
-                    if (this.currentStackButton != button) {
-                        if (this.currentStackButton != null)
-                            this.currentStackButton.setToggled(false);
-                        button.toggle();                    
-                        this.currentStackButton = button;
-                        int maxAmount = PrivilegeProviderClient.getPrivilegeValue(EnumMailPrivilege.PACKAGE_MAX_AMOUNT.toString(), MailConfig.PACKAGE_MAX_AMOUNT.getIntValue());
-                        ItemStack itemStack = this.currentStackButton.index;
-                        if (maxAmount < 0) 
-                            maxAmount = itemStack.getMaxStackSize();
-                        this.packageAmountTextField.enableNumberFieldMode(MathUtils.lesserOfTwo(InventoryHelper.getEqualStackAmount(this.mc.player, itemStack), maxAmount));
-                        this.packageAmountTextField.setText("0");
-                        this.packageAmountTextField.enable();
-                        if (this.enableRemittanceButton.isToggled()) {
-                            this.enableRemittanceButton.setToggled(false);
-                            this.currencyTextField.disable();
-                        } 
-                    }
-                }
             }
         }
     }
 
-    @Override
-    public boolean keyTyped(char typedChar, int keyCode) {   
-        boolean flag = super.keyTyped(typedChar, keyCode);   
-        if (this.addresseeTextField.isDragged()) {
-            if (!this.addresseeTextField.getTypedText().isEmpty()) {
-                this.addresseeStatusTextLabel.enableFull();
-                if (MailManagerClient.isPlayerAvailable(this.addresseeTextField.getTypedText()))
-                    this.addresseeStatusTextLabel.setDisplayText(this.playerFoundStr);
-                else
-                    this.addresseeStatusTextLabel.setDisplayText(this.playerNotFoundStr);
-            } else
-                this.addresseeStatusTextLabel.disableFull();
+    public void itemSelected(InventoryItemGUIButton clicked) {
+        if (this.currentItemButton != clicked) {
+            if (this.currentItemButton != null)
+                this.currentItemButton.setToggled(false);
+            clicked.toggle();                    
+            this.currentItemButton = clicked;
+            int maxAmount = PrivilegeProviderClient.getValue(EnumMailPrivilege.PACKAGE_MAX_AMOUNT.toString(), MailConfig.PACKAGE_MAX_AMOUNT.getIntValue());
+            ItemStack itemStack = this.currentItemButton.index;
+            if (maxAmount < 0) 
+                maxAmount = itemStack.getMaxStackSize();
+            this.packageAmountTextField.enableNumberFieldMode(MathUtils.lesserOfTwo(this.screen.getEqualStackAmount(clicked.stackWrapper), maxAmount));
+            this.packageAmountTextField.setText("1");
+            this.packageAmountTextField.enable();
+            if (this.enableRemittanceButton.isToggled()) {
+                this.enableRemittanceButton.setToggled(false);
+                this.currencyTextField.disable();
+            } 
         }
-        return flag; 
-    }
-
-    public void setBalance(int balance) {
-        this.balanceElement.setBalance(balance);
-    }
-
-    public int getBalance() {
-        return this.balanceElement.getBalance();
     }
 
     public Mail createMessage() {
@@ -254,49 +194,78 @@ public class SendingGUISection extends AbstractGUISection {
             else
                 type = EnumMail.PACKAGE;
         }   
-        this.latestMessage = new Mail(
+        long currency = 0L;
+        if (!this.currencyTextField.getTypedText().isEmpty())
+            currency = this.currencyTextField.getTypedNumber();
+        Parcel parcel = null;
+        if (this.currentItemButton != null)
+            parcel = Parcel.create(this.currentItemButton.index, (int) this.packageAmountTextField.getTypedNumber());
+        Mail message = new Mail(
+                0L, 
                 type, 
-                UUID.randomUUID(),//unused
+                UUID.randomUUID(),
                 ClientReference.getClientPlayer().getName(), 
                 this.subjectTextField.getTypedText(), 
-                this.messageTextBoxField.getTypedText());
-        if (!this.currencyTextField.getTypedText().isEmpty())
-            this.latestMessage.setCurrency(this.currencyTextField.getTypedNumber());
-        if (this.currentStackButton != null)
-            this.latestMessage.setParcel(Parcel.create(
-                    this.currentStackButton.index, 
-                    this.packageAmountTextField.getTypedNumber()));
-        return this.latestMessage;
+                this.messageTextBoxField.getTypedText(),
+                currency,
+                parcel);
+        return message;
     }
 
-    public void messageSent(int postage) {
-        int delta = this.balanceElement.getBalance() - (this.latestMessage.getCurrency() + postage);
-        this.setBalance(delta);
-        if (this.latestMessage.getParcel() != null) {
-            InventoryHelper.removeEqualStack(ClientReference.getClientPlayer(), this.latestMessage.getParcel().stackWrapper, this.latestMessage.getParcel().amount);
-            this.loadInventoryItems();
+    public void sharedDataSynchronized() {
+        this.addresseeTextField.load();
+        this.addresseeTextField.enable();
+    }
+
+    public void mailSynchronized() {}
+
+    public void messageSent(Parcel parcel, long balance) {
+        this.balanceElement.setValue(this.screen.getIncomingSection().getBalanceElement().getValue());
+        if (parcel != null) {
+            this.inventoryLoadElement.setLoad(this.screen.getIncomingSection().getInventoryLoadElement().getLoad());
+            ((SelectItemGUICallback) this.selectItemCallback).loadInventoryContent();
         }
-        this.latestMessage = null;
 
         this.addresseeTextField.reset();
         this.subjectTextField.reset();
         this.messageTextBoxField.reset();
 
         this.enableRemittanceButton.setToggled(false);
-        this.enablePackageButton.setToggled(false);
         this.enableCODButton.setToggled(false);
+        this.enablePackageButton.setToggled(false);
 
+        this.currencyTextField.disable();
         this.currencyTextField.setText("0");
+        this.packageAmountTextField.disable();
         this.packageAmountTextField.setText("0");
 
-        if (this.currentStackButton != null)
-            this.currentStackButton.setToggled(false);
-        this.currentStackButton = null;
+        if (this.currentItemButton != null)
+            this.currentItemButton.setToggled(false);
+        this.currentItemButton = null;
 
+        this.selectItemButton.disable();
         this.sendButton.disable();
+    }
+
+    public void messageRemoved(long messageId) {}
+
+    public void attachmentReceived(long oldMessageId, Parcel parcel, long balance) {
+        this.balanceElement.setValue(this.screen.getIncomingSection().getBalanceElement().getValue());
+        if (parcel != null) {
+            this.inventoryLoadElement.setLoad(this.screen.getIncomingSection().getInventoryLoadElement().getLoad());
+            ((SelectItemGUICallback) this.selectItemCallback).loadInventoryContent();
+        }
     }
 
     public String getAddresseeUsername() {
         return this.addresseeTextField.getTypedText();
+    }
+
+    public InventoryLoadGUIElement getInventoryLoadElement() {
+        return this.inventoryLoadElement;
+    }
+
+    public CurrencyValueGUIElement getBalanceElement() {
+        return this.balanceElement;
     }
 }

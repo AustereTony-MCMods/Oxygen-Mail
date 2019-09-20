@@ -11,6 +11,7 @@ oxygen_mail.gui.context.remove=Remove
 
 oxygen_mail.gui.mail.title=Mail
 
+oxygen_mail.gui.mail.selectItemButton=Select
 oxygen_mail.gui.mail.sendButton=Send
 
 oxygen_mail.gui.mail.incoming=Incoming
@@ -26,6 +27,7 @@ oxygen_mail.gui.mail.callback.returnAttachment=Return Attachment
 oxygen_mail.gui.mail.callback.returnAttachment.request=Return to sender?
 oxygen_mail.gui.mail.callback.removeMessage=Remove Message
 oxygen_mail.gui.mail.callback.removeMessage.request=Message will be removed.
+oxygen_mail.gui.mail.callback.selectItem=Select Item
 oxygen_mail.gui.mail.callback.sendMessage=Sending
 
 oxygen_mail.gui.mail.sendTo=To:
@@ -39,16 +41,10 @@ oxygen_mail.gui.mail.cod=C.O.D.
 oxygen_mail.gui.mail.package=Package
 
 oxygen_mail.gui.mail.msg.sender=Sender: %s
-oxygen_mail.gui.mail.msg.expires=Exp.: %s
+oxygen_mail.gui.mail.msg.expires=Expires: %s
 oxygen_mail.gui.mail.msg.received=Received: %s ago
 
 oxygen_mail.gui.neverExpires=Never
-
-oxygen_mail.chat_message.messageSent=Message sent.
-oxygen_mail.chat_message.messageNotSent=Message not sent.
-oxygen_mail.chat_message.attachmentReceived=Attachment received.
-oxygen_mail.chat_message.attachmentReturned=Attachment returned to sender.
-oxygen_mail.chat_message.messageRemoved=Message removed.
 
 oxygen_mail.command.dataReset=<oxygen: mail> client data reset.
 
@@ -67,6 +63,14 @@ mail.message.packageReturn=Return of unclaimed package.
 mail.cod.pay.s=C.O.D. Payment
 mail.cod.pay.m=Player paid C.O.D.
 
-oxygen_mail.tooltip.postage.value=%s for sending
-oxygen_mail.tooltip.postage.percent=%s percents of the transfer
-oxygen_mail.tooltip.postage.cod=%s for sending and %s percents from C.O.D.
+oxygen_mail.sorting.receiveTime=Receive Time
+oxygen_mail.sorting.subject=Subject
+
+oxygen_mail.status.playerNotFound=Player not found
+oxygen_mail.status.parcelDamaged=Parcel damaged
+oxygen_mail.status.itemBlackListed=Item blacklisted
+oxygen_mail.status.messageSent=Message sent
+oxygen_mail.status.messageSendingFailed=Message sending failed
+oxygen_mail.status.attachmentReceived=Attachment received
+oxygen_mail.status.messageReturned=Attachment returned to sender
+oxygen_mail.status.messageRemoved=Message removed

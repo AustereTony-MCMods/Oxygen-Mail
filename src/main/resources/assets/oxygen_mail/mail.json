@@ -1,11 +1,14 @@
 {
+  "setup": {
+    "mail_save_delay_minutes": 2
+  },
   "main": {
     "mailbox_size": 50,
-    "service_letter_expire_time_hours": -1,
+    "system_letter_expire_time_hours": -1,
     "letter_expire_time_hours": 720,
-    "service_remittance_expire_time_hours": -1,
+    "system_remittance_expire_time_hours": -1,
     "remittance_expire_time_hours": 24,
-    "service_package_expire_time_hours": -1,
+    "system_package_expire_time_hours": -1,
     "package_expire_time_hours": 24,
     "package_with_cod_expire_time_hours": 1,
     "mail_sending_delay_seconds": 30,

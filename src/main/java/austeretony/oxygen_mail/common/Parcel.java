@@ -1,13 +1,13 @@
-package austeretony.oxygen_mail.common.main;
+package austeretony.oxygen_mail.common;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 
-import austeretony.oxygen.common.itemstack.ItemStackWrapper;
-import austeretony.oxygen.util.StreamUtils;
+import austeretony.oxygen_core.common.item.ItemStackWrapper;
+import austeretony.oxygen_core.common.util.StreamUtils;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
 
 public class Parcel {
 
@@ -15,13 +15,17 @@ public class Parcel {
 
     public final int amount;
 
-    public Parcel(ItemStackWrapper stackWrapper, int amount) {
+    private Parcel(ItemStackWrapper stackWrapper, int amount) {
         this.stackWrapper = stackWrapper;
         this.amount = amount;
     }
 
     public static Parcel create(ItemStack itemStack, int amount) {
         return new Parcel(ItemStackWrapper.getFromStack(itemStack), amount);
+    }
+
+    public static Parcel create(ItemStackWrapper stackWrapper, int amount) {
+        return new Parcel(stackWrapper, amount);
     }
 
     public void write(BufferedOutputStream bos) throws IOException {
@@ -33,12 +37,12 @@ public class Parcel {
         return new Parcel(ItemStackWrapper.read(bis), StreamUtils.readShort(bis));
     }
 
-    public void write(PacketBuffer buffer) {
+    public void write(ByteBuf buffer) {
         this.stackWrapper.write(buffer);
         buffer.writeShort(this.amount);
     }
 
-    public static Parcel read(PacketBuffer buffer) {
+    public static Parcel read(ByteBuf buffer) {
         return new Parcel(ItemStackWrapper.read(buffer), buffer.readShort());
     }
 }

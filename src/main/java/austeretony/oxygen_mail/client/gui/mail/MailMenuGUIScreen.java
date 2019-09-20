@@ -1,50 +1,52 @@
 package austeretony.oxygen_mail.client.gui.mail;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import austeretony.alternateui.screen.core.AbstractGUIScreen;
 import austeretony.alternateui.screen.core.AbstractGUISection;
 import austeretony.alternateui.screen.core.GUIBaseElement;
 import austeretony.alternateui.screen.core.GUIWorkspace;
 import austeretony.alternateui.util.EnumGUIAlignment;
-import austeretony.oxygen.client.gui.AbstractMenuEntry;
-import austeretony.oxygen.client.gui.SynchronizedGUIScreen;
-import austeretony.oxygen_mail.client.gui.MailMenuEntry;
+import austeretony.oxygen_core.client.OxygenManagerClient;
+import austeretony.oxygen_core.client.api.ClientReference;
+import austeretony.oxygen_core.client.api.OxygenHelperClient;
+import austeretony.oxygen_core.client.gui.menu.OxygenMenuEntry;
+import austeretony.oxygen_core.common.item.ItemStackWrapper;
+import austeretony.oxygen_mail.common.Parcel;
+import austeretony.oxygen_mail.common.main.EnumMailStatusMessage;
 import austeretony.oxygen_mail.common.main.MailMain;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.item.ItemStack;
 
-public class MailMenuGUIScreen extends SynchronizedGUIScreen {
+public class MailMenuGUIScreen extends AbstractGUIScreen {
 
-    public static final ResourceLocation 
-    INCOMING_BACKGROUND_TEXTURE = new ResourceLocation(MailMain.MODID, "textures/gui/mail/mail_incoming.png"),
-    SENDING_BACKGROUND_TEXTURE = new ResourceLocation(MailMain.MODID, "textures/gui/mail/mail_sending.png"),
-
-    //
-
-    EXCLAMATION_MARK_ICONS_SMALL = new ResourceLocation(MailMain.MODID, "textures/gui/mail/exclamation_mark_icons_small.png"),
-    HOLLOW_RHOMBUS_ICONS_SMALL = new ResourceLocation(MailMain.MODID, "textures/gui/mail/hollow_rhombus_icons_small.png"),
-
-    //
-
-    MESSAGE_CALLBACK_BACKGROUND = new ResourceLocation(MailMain.MODID, "textures/gui/mail/message_callback.png"),
-    SENDING_CALLBACK_BACKGROUND = new ResourceLocation(MailMain.MODID, "textures/gui/mail/dending_callback.png");
-
-    public static final AbstractMenuEntry MAIL_MENU_ENTRY = new MailMenuEntry();
+    public static final OxygenMenuEntry MAIL_MENU_ENTRY = new MailMenuEntry();
 
     protected IncomingGUISection incomingSection;
 
     protected SendingGUISection sendingSection;
 
+    public final Map<ItemStackWrapper, Integer> inventoryContent;
+
     public MailMenuGUIScreen() {
-        super(MailMain.MAIL_MENU_SCREEN_ID);
+        OxygenHelperClient.syncSharedData(MailMain.MAIL_MENU_SCREEN_ID);
+        OxygenHelperClient.syncData(MailMain.MAIL_DATA_ID);
+
+        this.inventoryContent = new LinkedHashMap<>();
+        this.updateInventoryContent();
     }
 
     @Override
     protected GUIWorkspace initWorkspace() {
-        return new GUIWorkspace(this, 203, 168).setAlignment(EnumGUIAlignment.RIGHT, - 10, 0);
+        return new GUIWorkspace(this, 213, 170).setAlignment(EnumGUIAlignment.RIGHT, - 10, 0);
     }
 
     @Override
     protected void initSections() {
-        this.getWorkspace().initSection(this.incomingSection = new IncomingGUISection(this));    
-        this.getWorkspace().initSection(this.sendingSection = new SendingGUISection(this));        
+        this.getWorkspace().initSection(this.incomingSection = (IncomingGUISection) new IncomingGUISection(this)
+                .setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.incoming")).enable());    
+        this.getWorkspace().initSection(this.sendingSection = (SendingGUISection) new SendingGUISection(this)
+                .setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.sending")).enable());        
     }
 
     @Override
@@ -60,9 +62,59 @@ public class MailMenuGUIScreen extends SynchronizedGUIScreen {
         return false;
     }
 
-    @Override
-    public void loadData() {
-        this.incomingSection.sortMail(0);
+    public void informPlayer(EnumMailStatusMessage status) {
+        OxygenManagerClient.instance().getChatMessagesManager().showStatusMessage(MailMain.MAIL_MOD_INDEX, status.ordinal());
+    }
+
+    public void updateInventoryContent() {
+        this.inventoryContent.clear();
+        ItemStackWrapper wrapper;
+        int amount;
+        for (ItemStack itemStack : ClientReference.getClientPlayer().inventory.mainInventory) {
+            if (!itemStack.isEmpty()) {
+                wrapper = ItemStackWrapper.getFromStack(itemStack);
+                if (!this.inventoryContent.containsKey(wrapper))
+                    this.inventoryContent.put(wrapper, itemStack.getCount());
+                else {
+                    amount = this.inventoryContent.get(wrapper);
+                    amount += itemStack.getCount();
+                    this.inventoryContent.put(wrapper, amount);
+                }
+            }
+        }
+    }
+
+    public int getEqualStackAmount(ItemStackWrapper stackWrapper) {
+        int amount = 0;
+        for (ItemStackWrapper wrapper : this.inventoryContent.keySet())
+            if (wrapper.isEquals(stackWrapper))
+                amount += this.inventoryContent.get(wrapper);
+        return amount;
+    }
+
+    public void sharedDataSynchronized() {
+        this.incomingSection.sharedDataSynchronized();
+        this.sendingSection.sharedDataSynchronized();
+    }
+
+    public void mailSynchronized() {
+        this.incomingSection.mailSynchronized();
+        this.sendingSection.mailSynchronized();
+    }
+
+    public void messageSent(Parcel parcel, long balance) {
+        this.incomingSection.messageSent(parcel, balance);
+        this.sendingSection.messageSent(parcel, balance);
+    }
+
+    public void messageRemoved(long messageId) {
+        this.incomingSection.messageRemoved(messageId);
+        this.sendingSection.messageRemoved(messageId);
+    }
+
+    public void attachmentReceived(long oldMessageId, Parcel parcel, long balance) {
+        this.incomingSection.attachmentReceived(oldMessageId, parcel, balance);
+        this.sendingSection.attachmentReceived(oldMessageId, parcel, balance);
     }
 
     public IncomingGUISection getIncomingSection() {
