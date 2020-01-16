@@ -1,13 +1,67 @@
+0.10.0b [2020-01-17]
++ Improved menu design.
++ Added 1 second cooldown for sending packets - operations in the mail menu.
++ Updated configuration options:
+ Client
+ - "enable_mail_menu_key" [boolean] - enable the "open mail menu" key
+ 
+ Server
+ - "mailbox_size" [int] (synchronized) - mailbox size
+ - "system_letter_expire_time_hours" [int] (synchronized) - the storage period of the letter sent by the system in hours
+ - "letter_expire_time_hours" [int] (synchronized) - the storage period of the letter sent by the player in hours
+ - "system_remittance_expire_time_hours" [int] (synchronized) - the storage period of the money transfer sent by the system in hours
+ - "remittance_expire_time_hours" [int] (synchronized) - the storage period of the money transfer sent by the player in hours
+ - "system_package_expire_time_hours" [int] (synchronized) - the storage period of the package sent by the system in hours
+ - "package_expire_time_hours" [int] (synchronized) - the storage period of the package sent by the player in hours
+ - "package_with_cod_expire_time_hours" [int] (synchronized) - the storage period of the package with cash on delivery in hours
+ - "mail_sending_cooldown_seconds" [int] - cooldown for sending mail
+ - "remittance_max_value" [long] (synchronized) - maximum amount of money transfer
+ - "package_max_amount" [int] (synchronized) - the maximum number of items in the package
+ - "package_with_cod_max_value" [long] (synchronized) - the maximum price of cash on delivery
+ - "letter_postage_value" [long] (synchronized) - a fee for sending a letter
+ - "remittance_postage_percent" [int] (synchronized) - money transfer fee for sending a money transfer (percentage of the transfer amount)
+ - "package_postage_value" [long] (synchronized) - fee for sending a package
+ - "package_with_cod_postage_percent" [int] (synchronized) - commission for the sale of the item by cash on delivery (percentage of the price)
+ 
++ Added chat commands:
+  Server - Operators [/oxygenop]
+  - Send an mail: /oxygens mail -send <target> <mail type> <subject> <message> <args ...>
+ 
+  Client [/oxygenc]
+  - Open the mail menu: /oxygenc mail
+  - Reset client data: /oxygenc mail -reset-data
+  
++ Added privileges:
+ - "mail:mailboxSize" [id - 800, type - INT] - determines the size of the mailbox
+ - "mail:allowMailSending" [id - 801, type - INT] - the ability to send mail. By default, any player can send mail.
+ - "mail:mailSendingCooldownSeconds" [id - 802, type - INT] - cooldown for sending mail
+ 
+ - "mail:remittanceMaxValue" [id - 820, type - LONG] - maximum amount of money transfer
+ - "mail:packageMaxAmount" [id - 821, type - INT] - the maximum number of items in the package
+ - "mail:packageWithCODMaxValue" [id - 822, type - LONG] - the maximum amount for cash on delivery
+ 
+ - "mail:letterPostageValue" [id - 830, type - INT] - fee for sending a letter
+ - "mail:remittancePostagePercent" [id - 831, type - INT] - money transfer sending fee (percentage of the transfer amount)
+ - "mail:packagePostageValue" [id - 832, type - LONG] - fee for sending the package
+ - "mail:packageWithCODPostagePercent" [id - 833, type - INT] - commission for the sale of an item by cash on delivery (percentage of the price)
+ 
++ Added client settings:
+ Common
+ - the ability to open the mail menu through the general menu (Oxygen Menu)
+ 
+ Interface
+ - menu alignment
+
 0.9.0b [2019-09-20]
-+Compatibility with Oxygen Core 0.9.
++ Compatibility with Oxygen Core 0.9.
 
 0.8.1b [2019-08-12]
-+Code cleanup, removed all debugging stuff.
-+Fixed player mailbox initialization. In case of absence, a mailbox 
++ Code cleanup, removed all debugging stuff.
++ Fixed player mailbox initialization. In case of absence, a mailbox 
 will be created when sending the first letter if the player has already logged into the server.
-+Improved attachments return system. Each letter now contains a unique sender identifier (UUID), 
++ Improved attachments return system. Each letter now contains a unique sender identifier (UUID), 
 not just a username. All old data will be removed.
-+Added Oxygen Menu support.
++ Added Oxygen Menu support.
 
 0.8.0b
-+Initial release. Debugging version.
++ Initial release. Debugging version.
