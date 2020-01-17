@@ -11,7 +11,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import austeretony.oxygen_core.common.persistent.AbstractPersistentData;
 import austeretony.oxygen_core.common.util.StreamUtils;
 import austeretony.oxygen_core.server.api.OxygenHelperServer;
-import austeretony.oxygen_mail.common.config.MailConfig;
 import austeretony.oxygen_mail.common.main.MailMain;
 
 public class MailboxesContainerServer extends AbstractPersistentData {
@@ -26,16 +25,17 @@ public class MailboxesContainerServer extends AbstractPersistentData {
         return this.mailboxes.values();
     }
 
-    public boolean isMailboxExist(UUID playerUUID) {
-        return this.mailboxes.containsKey(playerUUID);
-    }
-
     public void createMailboxForPlayer(UUID playerUUID) {
         this.mailboxes.put(playerUUID, new Mailbox(playerUUID));
     }
 
     public Mailbox getPlayerMailbox(UUID playerUUID) {
-        return this.mailboxes.get(playerUUID);
+        Mailbox mailbox = this.mailboxes.get(playerUUID);
+        if (mailbox == null) {
+            mailbox = new Mailbox(playerUUID);
+            this.mailboxes.put(playerUUID, mailbox);
+        }
+        return mailbox;
     }
 
     @Override
@@ -46,11 +46,6 @@ public class MailboxesContainerServer extends AbstractPersistentData {
     @Override
     public String getPath() {
         return OxygenHelperServer.getDataFolder() + "/server/world/mail/mailboxes.dat";
-    }
-
-    @Override
-    public long getSaveDelayMinutes() {
-        return MailConfig.MAIL_SAVE_DELAY_MINUTES.getIntValue();
     }
 
     @Override

@@ -10,7 +10,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import austeretony.oxygen_core.common.util.StreamUtils;
-import austeretony.oxygen_core.server.api.PrivilegeProviderServer;
+import austeretony.oxygen_core.server.api.PrivilegesProviderServer;
 import austeretony.oxygen_mail.common.Mail;
 import austeretony.oxygen_mail.common.config.MailConfig;
 import austeretony.oxygen_mail.common.main.EnumMailPrivilege;
@@ -41,10 +41,6 @@ public class Mailbox {
         return this.mail.keySet();
     }
 
-    public boolean messageExist(long messageId) {
-        return this.mail.containsKey(messageId);
-    }
-
     public Mail getMessage(long messageId) {
         return this.mail.get(messageId);
     }
@@ -59,7 +55,7 @@ public class Mailbox {
     }
 
     public int getMaxCapacity() {
-        return PrivilegeProviderServer.getValue(this.playerUUID, EnumMailPrivilege.MAILBOX_SIZE.toString(), MailConfig.MAILBOX_SIZE.getIntValue());
+        return PrivilegesProviderServer.getAsInt(this.playerUUID, EnumMailPrivilege.MAILBOX_SIZE.id(), MailConfig.MAILBOX_SIZE.asInt());
     }
 
     public boolean canAcceptMessages() {
@@ -70,9 +66,9 @@ public class Mailbox {
         return System.currentTimeMillis() >= this.nextSendingTimeMillis;
     }
 
-    public void updateLastMessageSendingTime() {
+    public void applySendingCooldown() {
         this.nextSendingTimeMillis = System.currentTimeMillis() 
-                + PrivilegeProviderServer.getValue(this.playerUUID, EnumMailPrivilege.MAIL_SENDING_DELAY_SECONDS.toString(), MailConfig.MAIL_SENDING_DELAY_SECONDS.getIntValue()) * 1000;
+                + PrivilegesProviderServer.getAsInt(this.playerUUID, EnumMailPrivilege.MAIL_SENDING_COOLDOWN_SECONDS.id(), MailConfig.MAIL_SENDING_COOLDOWN_SECONDS.asInt()) * 1000;
     }
 
     public boolean isNewMailExist() {
@@ -85,7 +81,7 @@ public class Mailbox {
 
     public  long getNewId(long messageId) {
         while (this.mail.containsKey(messageId))
-            messageId += 1L;
+            messageId++;
         return messageId;
     }
 

@@ -1,32 +1,33 @@
 package austeretony.oxygen_mail.client.gui.mail.incoming;
 
 import austeretony.alternateui.util.EnumGUIAlignment;
-import austeretony.oxygen_core.client.gui.IndexedGUIButton;
-import austeretony.oxygen_core.client.gui.elements.CustomRectUtils;
-import austeretony.oxygen_core.client.gui.settings.GUISettings;
+import austeretony.oxygen_core.client.api.ClientReference;
+import austeretony.oxygen_core.client.api.EnumBaseGUISetting;
+import austeretony.oxygen_core.client.gui.OxygenGUIUtils;
+import austeretony.oxygen_core.client.gui.elements.OxygenIndexedPanelEntry;
 import austeretony.oxygen_mail.client.MailManagerClient;
 import austeretony.oxygen_mail.common.Mail;
 import net.minecraft.client.renderer.GlStateManager;
 
-public class MessageGUIButton extends IndexedGUIButton<Long> {
+public class MessagePanelEntry extends OxygenIndexedPanelEntry<Long> {
 
     private boolean pending;
 
-    public MessageGUIButton(Mail message) {
+    public MessagePanelEntry(Mail message) {
         super(message.getId());
         this.pending = message.isPending();
-        this.setStaticBackgroundColor(GUISettings.get().getStatusElementColor());
-        this.setDynamicBackgroundColor(GUISettings.get().getEnabledElementColor(), GUISettings.get().getDisabledElementColor(), GUISettings.get().getHoveredElementColor());
-        this.setTextDynamicColor(GUISettings.get().getEnabledTextColor(), GUISettings.get().getDisabledTextColor(), GUISettings.get().getHoveredTextColor());
-        this.setDisplayText(message.getLocalizedSubject());
+        this.setStaticBackgroundColor(EnumBaseGUISetting.STATUS_TEXT_COLOR.get().asInt());
+        this.setDynamicBackgroundColor(EnumBaseGUISetting.ELEMENT_ENABLED_COLOR.get().asInt(), EnumBaseGUISetting.ELEMENT_DISABLED_COLOR.get().asInt(), EnumBaseGUISetting.ELEMENT_HOVERED_COLOR.get().asInt());
+        this.setTextDynamicColor(EnumBaseGUISetting.TEXT_ENABLED_COLOR.get().asInt(), EnumBaseGUISetting.TEXT_DISABLED_COLOR.get().asInt(), EnumBaseGUISetting.TEXT_HOVERED_COLOR.get().asInt());
+        this.setDisplayText(ClientReference.localize(message.getSubject()));
         if (MailManagerClient.instance().getMailboxContainer().isMarkedAsRead(message.getId()))
             this.read();
     }
 
     public void read() {
-        this.setTextDynamicColor(GUISettings.get().getEnabledTextColorDark(), GUISettings.get().getEnabledTextColorDark(), GUISettings.get().getEnabledTextColorDark());
+        this.setTextDynamicColor(EnumBaseGUISetting.TEXT_DARK_ENABLED_COLOR.get().asInt(), EnumBaseGUISetting.TEXT_DARK_DISABLED_COLOR.get().asInt(), EnumBaseGUISetting.TEXT_DARK_HOVERED_COLOR.get().asInt());
     }
-    
+
     public void setPending(boolean flag) {
         this.pending = flag;
     }
@@ -40,8 +41,7 @@ public class MessageGUIButton extends IndexedGUIButton<Long> {
 
         int 
         color = this.getEnabledBackgroundColor(), 
-        textColor = this.getEnabledTextColor(), 
-        textY = (this.getHeight() - this.textHeight(this.getTextScale())) / 2;
+        textColor = this.getEnabledTextColor();
 
         if (!this.isEnabled()) {                 
             color = this.getDisabledBackgroundColor();
@@ -52,16 +52,16 @@ public class MessageGUIButton extends IndexedGUIButton<Long> {
         }
 
         int third = this.getWidth() / 3;
-        CustomRectUtils.drawGradientRect(0.0D, 0.0D, third, this.getHeight(), 0x00000000, color, EnumGUIAlignment.RIGHT);
+        OxygenGUIUtils.drawGradientRect(0.0D, 0.0D, third, this.getHeight(), 0x00000000, color, EnumGUIAlignment.RIGHT);
         drawRect(third, 0, this.getWidth() - third, this.getHeight(), color);
-        CustomRectUtils.drawGradientRect(this.getWidth() - third, 0.0D, this.getWidth(), this.getHeight(), 0x00000000, color, EnumGUIAlignment.LEFT);
+        OxygenGUIUtils.drawGradientRect(this.getWidth() - third, 0.0D, this.getWidth(), this.getHeight(), 0x00000000, color, EnumGUIAlignment.LEFT);
 
         GlStateManager.pushMatrix();           
-        GlStateManager.translate(0.0F, textY, 0.0F); 
+        GlStateManager.translate(1.0F, (this.getHeight() - this.textHeight(this.getTextScale())) / 2.0F + 1.0F, 0.0F); 
         GlStateManager.scale(this.getTextScale(), this.getTextScale(), 0.0F); 
         if (this.pending)
             this.mc.fontRenderer.drawString("!", 0, 0, this.getStaticBackgroundColor(), false);
-        this.mc.fontRenderer.drawString(this.getDisplayText(), 6, 0, textColor, false);
+        this.mc.fontRenderer.drawString(this.getDisplayText(), 5, 0, textColor, false);
         GlStateManager.popMatrix();
 
         GlStateManager.popMatrix();

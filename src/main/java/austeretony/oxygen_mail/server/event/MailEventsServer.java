@@ -1,6 +1,5 @@
 package austeretony.oxygen_mail.server.event;
 
-import austeretony.oxygen_core.server.api.event.OxygenPlayerLoadedEvent;
 import austeretony.oxygen_core.server.api.event.OxygenPrivilegesLoadedEvent;
 import austeretony.oxygen_core.server.api.event.OxygenWorldLoadedEvent;
 import austeretony.oxygen_mail.common.main.MailMain;
@@ -17,10 +16,5 @@ public class MailEventsServer {
     @SubscribeEvent
     public void onWorldLoaded(OxygenWorldLoadedEvent event) {
         MailManagerServer.instance().worldLoaded();
-    }
-
-    @SubscribeEvent
-    public void onPlayerLoggedIn(OxygenPlayerLoadedEvent event) {
-        MailManagerServer.instance().playerLoggedIn(event.playerMP);
     }
 }

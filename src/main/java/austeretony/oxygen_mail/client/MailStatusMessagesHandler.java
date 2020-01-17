@@ -1,6 +1,6 @@
 package austeretony.oxygen_mail.client;
 
-import austeretony.oxygen_core.common.status.ChatMessagesHandler;
+import austeretony.oxygen_core.common.chat.ChatMessagesHandler;
 import austeretony.oxygen_mail.common.main.EnumMailStatusMessage;
 import austeretony.oxygen_mail.common.main.MailMain;
 

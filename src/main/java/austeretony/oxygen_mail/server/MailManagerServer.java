@@ -1,9 +1,9 @@
 package austeretony.oxygen_mail.server;
 
-import austeretony.oxygen_core.common.api.CommonReference;
+import java.util.concurrent.TimeUnit;
+
 import austeretony.oxygen_core.server.api.OxygenHelperServer;
 import austeretony.oxygen_core.server.item.ItemsBlackList;
-import net.minecraft.entity.player.EntityPlayerMP;
 
 public final class MailManagerServer {
 
@@ -17,12 +17,26 @@ public final class MailManagerServer {
 
     private MailManagerServer() {
         this.mailboxesManager = new MailboxesManagerServer(this);
+    }
+
+    private void registerPersistentData() {
         OxygenHelperServer.registerPersistentData(this.mailboxesContainer);
     }
 
+    private void scheduleRepeatableProcesses() {
+        OxygenHelperServer.getSchedulerExecutorService().scheduleAtFixedRate(
+                ()->{
+                    this.mailboxesManager.processMailSendingQueue();
+                    this.mailboxesManager.processMailOperationsQueue();
+                }, 500L, 500L, TimeUnit.MILLISECONDS);
+    }
+
     public static void create() {
-        if (instance == null)
+        if (instance == null) {
             instance = new MailManagerServer();
+            instance.registerPersistentData();
+            instance.scheduleRepeatableProcesses();
+        }
     }
 
     public static MailManagerServer instance() {
@@ -44,8 +58,4 @@ public final class MailManagerServer {
     public void worldLoaded() {
         OxygenHelperServer.loadPersistentDataAsync(this.mailboxesContainer);
     }
-
-    public void playerLoggedIn(EntityPlayerMP playerMP) {
-        this.mailboxesManager.checkMailbox(CommonReference.getPersistentUUID(playerMP));
-    }    
 }

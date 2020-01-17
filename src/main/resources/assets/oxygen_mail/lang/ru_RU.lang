@@ -1,4 +1,7 @@
-key.oxygen_mail.openMailMenu=Открыть Меню Почты
+key.oxygen_mail.mailMenu=Открыть Меню Почты
+
+oxygen_mail.gui.settings.option.addMailMenu=Меню Почты
+oxygen_mail.gui.settings.option.alignmentMailMenu=Меню Почты
 
 oxygen_mail.incoming=Вы получили новое письмо.
 
@@ -17,7 +20,7 @@ oxygen_mail.gui.mail.sendButton=Отправить
 oxygen_mail.gui.mail.incoming=Входящие
 oxygen_mail.gui.mail.sending=Отправка
 oxygen_mail.gui.mail.attachment=Вложение
-oxygen_mail.gui.mail.attachment.cost=Стоимость
+oxygen_mail.gui.mail.attachment.cost=Стоимость:
 oxygen_mail.gui.mail.addressee=Получатель: %s
 oxygen_mail.gui.mail.noAttachment=Нет Вложения
 
@@ -41,8 +44,8 @@ oxygen_mail.gui.mail.cod=Наложенный Платёж
 oxygen_mail.gui.mail.package=Посылка
 
 oxygen_mail.gui.mail.msg.sender=Отправитель: %s
-oxygen_mail.gui.mail.msg.expires=Истекает: %s
-oxygen_mail.gui.mail.msg.received=Получено: %s назад
+oxygen_mail.gui.mail.msg.expires=Истекает через: %s
+oxygen_mail.gui.mail.msg.received=%s назад
 
 oxygen_mail.gui.neverExpires=Никогда
 
@@ -74,3 +77,7 @@ oxygen_mail.status.messageSendingFailed=Сбой при отправке пис�
 oxygen_mail.status.attachmentReceived=Вложение получено
 oxygen_mail.status.messageReturned=Вложение возвращено отправителю
 oxygen_mail.status.messageRemoved=Сообщение удалено
+
+oxygen_mail.message.command.oxygens.mail.letterSent=Письмо отправлено <%s> - тема: %s, сообщение: %s
+oxygen_mail.message.command.oxygens.mail.remittanceSent=Денежный перевод отправлен <%s> - тема: %s, сообщение: %s, сумма: %s
+oxygen_mail.message.command.oxygens.mail.packageSent=Посылка отправлена <%s> - тема: %s, сообщение: %s, кол-во: %s, предмет: %s

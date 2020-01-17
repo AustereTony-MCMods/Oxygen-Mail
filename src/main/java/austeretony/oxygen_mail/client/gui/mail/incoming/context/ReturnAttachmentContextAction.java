@@ -2,20 +2,20 @@ package austeretony.oxygen_mail.client.gui.mail.incoming.context;
 
 import austeretony.alternateui.screen.core.GUIBaseElement;
 import austeretony.oxygen_core.client.api.ClientReference;
-import austeretony.oxygen_core.client.gui.elements.OxygenGUIContextMenuElement.ContextMenuAction;
-import austeretony.oxygen_mail.client.gui.mail.IncomingGUISection;
+import austeretony.oxygen_core.client.gui.elements.OxygenContextMenu.OxygenContextMenuAction;
+import austeretony.oxygen_mail.client.gui.mail.IncomingMailSection;
 import austeretony.oxygen_mail.common.EnumMail;
 
-public class ReturnAttachmentContextAction implements ContextMenuAction {
+public class ReturnAttachmentContextAction implements OxygenContextMenuAction {
 
-    private final IncomingGUISection section;
+    private final IncomingMailSection section;
 
-    public ReturnAttachmentContextAction(IncomingGUISection section) {
+    public ReturnAttachmentContextAction(IncomingMailSection section) {
         this.section = section;
     }
 
     @Override
-    public String getName(GUIBaseElement currElement) {
+    public String getLocalizedName(GUIBaseElement currElement) {
         return ClientReference.localize("oxygen_mail.gui.context.return");
     }
 

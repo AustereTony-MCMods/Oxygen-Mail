@@ -1,4 +1,9 @@
-key.oxygen_mail.openMailMenu=Open Mail Menu
+key.oxygen_mail.mailMenu=Open Mail Menu
+
+oxygen_mail.gui.settings.module.mail=Mail
+
+oxygen_mail.gui.settings.option.addMailMenu=Mail Menu
+oxygen_mail.gui.settings.option.alignmentMailMenu=Mail Menu
 
 oxygen_mail.incoming=You received new message.
 
@@ -17,7 +22,7 @@ oxygen_mail.gui.mail.sendButton=Send
 oxygen_mail.gui.mail.incoming=Incoming
 oxygen_mail.gui.mail.sending=Sending
 oxygen_mail.gui.mail.attachment=Attachment
-oxygen_mail.gui.mail.attachment.cost=Cost
+oxygen_mail.gui.mail.attachment.cost=Cost:
 oxygen_mail.gui.mail.addressee=To: %s
 oxygen_mail.gui.mail.noAttachment=No Attachment
 
@@ -40,9 +45,9 @@ oxygen_mail.gui.mail.remittance=Remittance
 oxygen_mail.gui.mail.cod=C.O.D.
 oxygen_mail.gui.mail.package=Package
 
-oxygen_mail.gui.mail.msg.sender=Sender: %s
-oxygen_mail.gui.mail.msg.expires=Expires: %s
-oxygen_mail.gui.mail.msg.received=Received: %s ago
+oxygen_mail.gui.mail.msg.sender=From: %s
+oxygen_mail.gui.mail.msg.expires=Expires in: %s
+oxygen_mail.gui.mail.msg.received=%s ago
 
 oxygen_mail.gui.neverExpires=Never
 
@@ -74,3 +79,7 @@ oxygen_mail.status.messageSendingFailed=Message sending failed
 oxygen_mail.status.attachmentReceived=Attachment received
 oxygen_mail.status.messageReturned=Attachment returned to sender
 oxygen_mail.status.messageRemoved=Message removed
+
+oxygen_mail.message.command.oxygens.mail.letterSent=Letter sent to <%s> - subject: %s, message: %s
+oxygen_mail.message.command.oxygens.mail.remittanceSent=Remittance sent to <%s> - subject: %s, message: %s, value: %s
+oxygen_mail.message.command.oxygens.mail.packageSent=Package sent to <%s> - subject: %s, message: %s, amount: %s, item: %s

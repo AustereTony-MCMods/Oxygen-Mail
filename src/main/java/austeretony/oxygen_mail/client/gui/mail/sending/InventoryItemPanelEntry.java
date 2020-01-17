@@ -1,15 +1,17 @@
 package austeretony.oxygen_mail.client.gui.mail.sending;
 
 import austeretony.alternateui.util.EnumGUIAlignment;
-import austeretony.oxygen_core.client.gui.IndexedGUIButton;
-import austeretony.oxygen_core.client.gui.elements.CustomRectUtils;
-import austeretony.oxygen_core.client.gui.settings.GUISettings;
+import austeretony.oxygen_core.client.api.EnumBaseClientSetting;
+import austeretony.oxygen_core.client.api.EnumBaseGUISetting;
+import austeretony.oxygen_core.client.gui.OxygenGUIUtils;
+import austeretony.oxygen_core.client.gui.elements.OxygenIndexedPanelEntry;
 import austeretony.oxygen_core.common.item.ItemStackWrapper;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.item.ItemStack;
 
-public class InventoryItemGUIButton extends IndexedGUIButton<ItemStack> {
+public class InventoryItemPanelEntry extends OxygenIndexedPanelEntry<ItemStack> {
 
     public final ItemStackWrapper stackWrapper;
 
@@ -17,26 +19,34 @@ public class InventoryItemGUIButton extends IndexedGUIButton<ItemStack> {
 
     private int playerStock;
 
-    private boolean singleItem;
+    private final boolean singleItem, enableDurabilityBar;   
 
-    public InventoryItemGUIButton(ItemStackWrapper stackWrapper, int playerStock) {
+    public InventoryItemPanelEntry(ItemStackWrapper stackWrapper, int playerStock) {
         super(stackWrapper.getCachedItemStack());
         this.stackWrapper = stackWrapper;
         this.playerStock = playerStock;
         this.playerStockStr = String.valueOf(playerStock);
         this.singleItem = playerStock == 1;
-        this.setDynamicBackgroundColor(GUISettings.get().getEnabledElementColor(), GUISettings.get().getDisabledElementColor(), GUISettings.get().getHoveredElementColor());
-        this.setTextDynamicColor(GUISettings.get().getEnabledTextColor(), GUISettings.get().getDisabledTextColor(), GUISettings.get().getHoveredTextColor());
+        this.enableDurabilityBar = EnumBaseClientSetting.ENABLE_ITEMS_DURABILITY_BAR.get().asBoolean();
+        this.setDynamicBackgroundColor(EnumBaseGUISetting.ELEMENT_ENABLED_COLOR.get().asInt(), EnumBaseGUISetting.ELEMENT_DISABLED_COLOR.get().asInt(), EnumBaseGUISetting.ELEMENT_HOVERED_COLOR.get().asInt());
+        this.setTextDynamicColor(EnumBaseGUISetting.TEXT_ENABLED_COLOR.get().asInt(), EnumBaseGUISetting.TEXT_DISABLED_COLOR.get().asInt(), EnumBaseGUISetting.TEXT_HOVERED_COLOR.get().asInt());
         this.setDisplayText(this.index.getDisplayName());
-        this.setTextScale(GUISettings.get().getSubTextScale() - 0.05F);
     }
 
     @Override
     public void draw(int mouseX, int mouseY) {
-        if (this.isVisible()) {         
+        if (this.isVisible()) {        
             RenderHelper.enableGUIStandardItemLighting();            
             GlStateManager.enableDepth();
-            this.itemRender.renderItemAndEffectIntoGUI(this.index, this.getX() + 2, this.getY());                              
+            this.itemRender.renderItemAndEffectIntoGUI(this.index, this.getX() + 2, this.getY());   
+
+            if (this.enableDurabilityBar) {
+                FontRenderer font = this.index.getItem().getFontRenderer(this.index);
+                if (font == null) 
+                    font = this.mc.fontRenderer;
+                this.itemRender.renderItemOverlayIntoGUI(font, this.index, this.getX() + 2, this.getY(), null);
+            }
+
             GlStateManager.disableDepth();
             RenderHelper.disableStandardItemLighting();
 
@@ -52,9 +62,9 @@ public class InventoryItemGUIButton extends IndexedGUIButton<ItemStack> {
                 color = this.getHoveredBackgroundColor();      
 
             int third = this.getWidth() / 3;
-            CustomRectUtils.drawGradientRect(0.0D, 0.0D, third, this.getHeight(), 0x00000000, color, EnumGUIAlignment.RIGHT);
+            OxygenGUIUtils.drawGradientRect(0.0D, 0.0D, third, this.getHeight(), 0x00000000, color, EnumGUIAlignment.RIGHT);
             drawRect(third, 0, this.getWidth() - third, this.getHeight(), color);
-            CustomRectUtils.drawGradientRect(this.getWidth() - third, 0.0D, this.getWidth(), this.getHeight(), 0x00000000, color, EnumGUIAlignment.LEFT);
+            OxygenGUIUtils.drawGradientRect(this.getWidth() - third, 0.0D, this.getWidth(), this.getHeight(), 0x00000000, color, EnumGUIAlignment.LEFT);
 
             color = this.getEnabledTextColor();
             if (!this.isEnabled())                  

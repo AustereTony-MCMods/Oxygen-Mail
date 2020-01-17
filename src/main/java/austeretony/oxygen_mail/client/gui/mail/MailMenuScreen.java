@@ -11,42 +11,61 @@ import austeretony.alternateui.util.EnumGUIAlignment;
 import austeretony.oxygen_core.client.OxygenManagerClient;
 import austeretony.oxygen_core.client.api.ClientReference;
 import austeretony.oxygen_core.client.api.OxygenHelperClient;
+import austeretony.oxygen_core.client.api.PrivilegesProviderClient;
 import austeretony.oxygen_core.client.gui.menu.OxygenMenuEntry;
 import austeretony.oxygen_core.common.item.ItemStackWrapper;
+import austeretony.oxygen_mail.client.gui.menu.MailMenuEntry;
+import austeretony.oxygen_mail.client.settings.gui.EnumMailGUISetting;
 import austeretony.oxygen_mail.common.Parcel;
+import austeretony.oxygen_mail.common.main.EnumMailPrivilege;
 import austeretony.oxygen_mail.common.main.EnumMailStatusMessage;
 import austeretony.oxygen_mail.common.main.MailMain;
 import net.minecraft.item.ItemStack;
 
-public class MailMenuGUIScreen extends AbstractGUIScreen {
+public class MailMenuScreen extends AbstractGUIScreen {
 
     public static final OxygenMenuEntry MAIL_MENU_ENTRY = new MailMenuEntry();
 
-    protected IncomingGUISection incomingSection;
+    protected IncomingMailSection incomingSection;
 
-    protected SendingGUISection sendingSection;
+    protected SendingSection sendingSection;
 
-    public final Map<ItemStackWrapper, Integer> inventoryContent;
+    public final Map<ItemStackWrapper, Integer> inventoryContent = new LinkedHashMap<>();
 
-    public MailMenuGUIScreen() {
+    public final boolean allowMailSending;
+
+    public MailMenuScreen() {
         OxygenHelperClient.syncSharedData(MailMain.MAIL_MENU_SCREEN_ID);
         OxygenHelperClient.syncData(MailMain.MAIL_DATA_ID);
-
-        this.inventoryContent = new LinkedHashMap<>();
         this.updateInventoryContent();
+
+        this.allowMailSending = PrivilegesProviderClient.getAsBoolean(EnumMailPrivilege.ALLOW_MAIL_SENDING.id(), true);
     }
 
     @Override
     protected GUIWorkspace initWorkspace() {
-        return new GUIWorkspace(this, 213, 170).setAlignment(EnumGUIAlignment.RIGHT, - 10, 0);
+        EnumGUIAlignment alignment = EnumGUIAlignment.CENTER;
+        switch (EnumMailGUISetting.MAIL_MENU_ALIGNMENT.get().asInt()) {
+        case - 1: 
+            alignment = EnumGUIAlignment.LEFT;
+            break;
+        case 0:
+            alignment = EnumGUIAlignment.CENTER;
+            break;
+        case 1:
+            alignment = EnumGUIAlignment.RIGHT;
+            break;    
+        default:
+            alignment = EnumGUIAlignment.CENTER;
+            break;
+        }
+        return new GUIWorkspace(this, 213, 170).setAlignment(alignment, 0, 0);
     }
 
     @Override
     protected void initSections() {
-        this.getWorkspace().initSection(this.incomingSection = (IncomingGUISection) new IncomingGUISection(this)
-                .setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.incoming")).enable());    
-        this.getWorkspace().initSection(this.sendingSection = (SendingGUISection) new SendingGUISection(this)
-                .setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.sending")).enable());        
+        this.getWorkspace().initSection(this.incomingSection = (IncomingMailSection) new IncomingMailSection(this).enable());    
+        this.getWorkspace().initSection(this.sendingSection = (SendingSection) new SendingSection(this).enable());        
     }
 
     @Override
@@ -117,11 +136,11 @@ public class MailMenuGUIScreen extends AbstractGUIScreen {
         this.sendingSection.attachmentReceived(oldMessageId, parcel, balance);
     }
 
-    public IncomingGUISection getIncomingSection() {
+    public IncomingMailSection getIncomingSection() {
         return this.incomingSection;
     }
 
-    public SendingGUISection getSendingSection() {
+    public SendingSection getSendingSection() {
         return this.sendingSection;
     }
 }

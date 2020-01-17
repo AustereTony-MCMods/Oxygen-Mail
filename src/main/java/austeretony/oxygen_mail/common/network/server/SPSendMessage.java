@@ -4,7 +4,6 @@ import austeretony.oxygen_core.common.api.CommonReference;
 import austeretony.oxygen_core.common.network.Packet;
 import austeretony.oxygen_core.common.util.ByteBufUtils;
 import austeretony.oxygen_core.server.api.OxygenHelperServer;
-import austeretony.oxygen_core.server.api.RequestsFilterHelper;
 import austeretony.oxygen_mail.common.EnumMail;
 import austeretony.oxygen_mail.common.Parcel;
 import austeretony.oxygen_mail.common.main.MailMain;
@@ -49,7 +48,7 @@ public class SPSendMessage extends Packet {
     @Override
     public void read(ByteBuf buffer, INetHandler netHandler) {
         final EntityPlayerMP playerMP = getEntityPlayerMP(netHandler);
-        if (RequestsFilterHelper.getLock(CommonReference.getPersistentUUID(playerMP), MailMain.MESSAGE_SENDING_REQUEST_ID)) {
+        if (OxygenHelperServer.isNetworkRequestAvailable(CommonReference.getPersistentUUID(playerMP), MailMain.MESSAGE_OPERATION_REQUEST_ID)) {
             final String 
             addressee = ByteBufUtils.readString(buffer),
             subject = ByteBufUtils.readString(buffer),

@@ -5,15 +5,14 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
-import austeretony.oxygen_core.client.api.ClientReference;
 import austeretony.oxygen_core.common.persistent.PersistentEntry;
-import austeretony.oxygen_core.common.sync.SynchronizedData;
+import austeretony.oxygen_core.common.sync.SynchronousEntry;
 import austeretony.oxygen_core.common.util.ByteBufUtils;
 import austeretony.oxygen_core.common.util.StreamUtils;
 import austeretony.oxygen_mail.common.config.MailConfig;
 import io.netty.buffer.ByteBuf;
 
-public class Mail implements PersistentEntry, SynchronizedData {
+public class Mail implements PersistentEntry, SynchronousEntry {
 
     public static final int 
     MESSAGE_SUBJECT_MAX_LENGTH = 24,
@@ -42,15 +41,11 @@ public class Mail implements PersistentEntry, SynchronizedData {
         this.type = type;
         this.senderUUID = senderUUID;
         this.senderName = senderName;
-        if (subject.length() > MESSAGE_SUBJECT_MAX_LENGTH)
-            subject = subject.substring(0, MESSAGE_SUBJECT_MAX_LENGTH);
         this.subject = subject;
-        if (message.length() > MESSAGE_MAX_LENGTH)
-            message = message.substring(0, MESSAGE_MAX_LENGTH);
         this.message = message;
         this.currency = currency;
         this.parcel = parcel;
-        if (currency > 0 || parcel != null)
+        if (currency > 0L || parcel != null)
             this.pending = true;
     }
 
@@ -75,24 +70,12 @@ public class Mail implements PersistentEntry, SynchronizedData {
         return this.senderName;
     }
 
-    public String getLocalizedSenderName() {
-        return ClientReference.localize(this.senderName);
-    }
-
     public String getSubject() {
         return this.subject;
     }
 
-    public String getLocalizedSubject() {
-        return ClientReference.localize(this.subject);
-    }
-
     public String getMessage() {
         return this.message;
-    }
-
-    public String getLocalizedMessage() {
-        return ClientReference.localize(this.message);
     }
 
     public long getCurrency() {
@@ -119,25 +102,25 @@ public class Mail implements PersistentEntry, SynchronizedData {
         int expiresInHours = - 1;
         switch (this.type) {
         case SYSTEM_LETTER:
-            expiresInHours = MailConfig.SYSTEM_LETTER_EXPIRE_TIME_HOURS.getIntValue();
+            expiresInHours = MailConfig.SYSTEM_LETTER_EXPIRE_TIME_HOURS.asInt();
             break;
         case LETTER:
-            expiresInHours = MailConfig.LETTER_EXPIRE_TIME_HOURS.getIntValue();
+            expiresInHours = MailConfig.LETTER_EXPIRE_TIME_HOURS.asInt();
             break;
         case SYSTEM_REMITTANCE:
-            expiresInHours = MailConfig.SYSTEM_REMITTANCE_EXPIRE_TIME_HOURS.getIntValue();
+            expiresInHours = MailConfig.SYSTEM_REMITTANCE_EXPIRE_TIME_HOURS.asInt();
             break;
         case REMITTANCE:
-            expiresInHours = MailConfig.REMITTANCE_EXPIRE_TIME_HOURS.getIntValue();
+            expiresInHours = MailConfig.REMITTANCE_EXPIRE_TIME_HOURS.asInt();
             break;
         case SYSTEM_PACKAGE:
-            expiresInHours = MailConfig.SYSTEM_PACKAGE_EXPIRE_TIME_HOURS.getIntValue();
+            expiresInHours = MailConfig.SYSTEM_PACKAGE_EXPIRE_TIME_HOURS.asInt();
             break;
         case PACKAGE:
-            expiresInHours = MailConfig.PACKAGE_EXPIRE_TIME_HOURS.getIntValue();
+            expiresInHours = MailConfig.PACKAGE_EXPIRE_TIME_HOURS.asInt();
             break;
         case PACKAGE_WITH_COD:
-            expiresInHours = MailConfig.PACKAGE_WITH_COD_EXPIRE_TIME_HOURS.getIntValue();
+            expiresInHours = MailConfig.PACKAGE_WITH_COD_EXPIRE_TIME_HOURS.asInt();
             break;  
         }
         if (expiresInHours < 0)

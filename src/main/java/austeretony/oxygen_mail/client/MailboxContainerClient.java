@@ -12,7 +12,6 @@ import austeretony.oxygen_core.client.api.OxygenHelperClient;
 import austeretony.oxygen_core.common.persistent.AbstractPersistentData;
 import austeretony.oxygen_core.common.util.StreamUtils;
 import austeretony.oxygen_mail.common.Mail;
-import austeretony.oxygen_mail.common.config.MailConfig;
 import io.netty.util.internal.ConcurrentSet;
 
 public class MailboxContainerClient extends AbstractPersistentData {
@@ -65,11 +64,6 @@ public class MailboxContainerClient extends AbstractPersistentData {
     @Override
     public String getPath() {
         return OxygenHelperClient.getDataFolder() + "/client/players/" + OxygenHelperClient.getPlayerUUID() + "/mail/mailbox.dat";
-    }
-
-    @Override
-    public long getSaveDelayMinutes() {
-        return MailConfig.MAIL_SAVE_DELAY_MINUTES.getIntValue();
     }
 
     @Override
