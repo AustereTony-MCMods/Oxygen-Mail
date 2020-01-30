@@ -2,8 +2,8 @@ package austeretony.oxygen_mail.client.gui.mail;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.lwjgl.input.Keyboard;
 
@@ -15,8 +15,8 @@ import austeretony.alternateui.screen.text.GUITextBoxLabel;
 import austeretony.oxygen_core.client.api.ClientReference;
 import austeretony.oxygen_core.client.api.EnumBaseGUISetting;
 import austeretony.oxygen_core.client.api.OxygenGUIHelper;
-import austeretony.oxygen_core.client.api.OxygenHelperClient;
 import austeretony.oxygen_core.client.api.PrivilegesProviderClient;
+import austeretony.oxygen_core.client.api.TimeHelperClient;
 import austeretony.oxygen_core.client.api.WatcherHelperClient;
 import austeretony.oxygen_core.client.gui.elements.OxygenButton;
 import austeretony.oxygen_core.client.gui.elements.OxygenContextMenu;
@@ -253,7 +253,7 @@ public class IncomingMailSection extends AbstractGUISection {
                 this.currentMessage.getSenderUsername().equals("mail.sender.sys") ? TextFormatting.YELLOW + localize(this.currentMessage.getSenderUsername()) : localize(this.currentMessage.getSenderUsername())));
         this.senderTextLabel.enableFull(); 
 
-        this.receiveTimeTextLabel.setDisplayText(OxygenHelperClient.getDateFormat().format(new Date(this.currentMessage.getId())));
+        this.receiveTimeTextLabel.setDisplayText(TimeHelperClient.getDateTimeFormatter().format(TimeHelperClient.getZonedDateTime(this.currentMessage.getId())));
         this.receiveTimeTextLabel.initTooltip(ClientReference.localize("oxygen_mail.gui.mail.msg.received", OxygenUtils.getTimePassedLocalizedString(this.currentMessage.getId())));
         this.receiveTimeTextLabel.enableFull(); 
 
@@ -311,33 +311,33 @@ public class IncomingMailSection extends AbstractGUISection {
     }
 
     private static String getExpirationTimeLocalizedString(EnumMail type, long millis) {
-        int expiresIn = - 1;
+        int expiresInHours = - 1;
         switch (type) {
         case SYSTEM_LETTER:
-            expiresIn = MailConfig.SYSTEM_LETTER_EXPIRE_TIME_HOURS.asInt();
+            expiresInHours = MailConfig.SYSTEM_LETTER_EXPIRE_TIME_HOURS.asInt();
             break;
         case LETTER:
-            expiresIn = MailConfig.LETTER_EXPIRE_TIME_HOURS.asInt();
+            expiresInHours = MailConfig.LETTER_EXPIRE_TIME_HOURS.asInt();
             break;
         case SYSTEM_REMITTANCE:
-            expiresIn = MailConfig.SYSTEM_REMITTANCE_EXPIRE_TIME_HOURS.asInt();
+            expiresInHours = MailConfig.SYSTEM_REMITTANCE_EXPIRE_TIME_HOURS.asInt();
             break;
         case REMITTANCE:
-            expiresIn = MailConfig.REMITTANCE_EXPIRE_TIME_HOURS.asInt();
+            expiresInHours = MailConfig.REMITTANCE_EXPIRE_TIME_HOURS.asInt();
             break;
         case SYSTEM_PACKAGE:
-            expiresIn = MailConfig.SYSTEM_PACKAGE_EXPIRE_TIME_HOURS.asInt();
+            expiresInHours = MailConfig.SYSTEM_PACKAGE_EXPIRE_TIME_HOURS.asInt();
             break;
         case PACKAGE:
-            expiresIn = MailConfig.PACKAGE_EXPIRE_TIME_HOURS.asInt();
+            expiresInHours = MailConfig.PACKAGE_EXPIRE_TIME_HOURS.asInt();
             break;
         case PACKAGE_WITH_COD:
-            expiresIn = MailConfig.PACKAGE_WITH_COD_EXPIRE_TIME_HOURS.asInt();
+            expiresInHours = MailConfig.PACKAGE_WITH_COD_EXPIRE_TIME_HOURS.asInt();
             break;  
         }
-        if (expiresIn < 0)
+        if (expiresInHours < 0)
             return ClientReference.localize("oxygen_mail.gui.neverExpires");
-        return OxygenUtils.getExpirationTimeLocalizedString(expiresIn * 3_600_000L, millis);
+        return OxygenUtils.getExpirationTimeLocalizedString(TimeUnit.HOURS.toMillis(expiresInHours), millis);
     }
 
     public void sharedDataSynchronized() {}

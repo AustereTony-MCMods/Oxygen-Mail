@@ -44,7 +44,7 @@ import net.minecraftforge.fml.relauncher.Side;
         modid = MailMain.MODID, 
         name = MailMain.NAME, 
         version = MailMain.VERSION,
-        dependencies = "required-after:oxygen_core@[0.10.0,);",
+        dependencies = "required-after:oxygen_core@[0.10.1,);",
         certificateFingerprint = "@FINGERPRINT@",
         updateJSON = MailMain.VERSIONS_FORGE_URL)
 public class MailMain {
@@ -52,7 +52,7 @@ public class MailMain {
     public static final String 
     MODID = "oxygen_mail",
     NAME = "Oxygen: Mail",
-    VERSION = "0.10.0",
+    VERSION = "0.10.1",
     VERSION_CUSTOM = VERSION + ":beta:0",
     GAME_VERSION = "1.12.2",
     VERSIONS_FORGE_URL = "https://raw.githubusercontent.com/AustereTony-MCMods/Oxygen-Mail/info/mod_versions_forge.json";
