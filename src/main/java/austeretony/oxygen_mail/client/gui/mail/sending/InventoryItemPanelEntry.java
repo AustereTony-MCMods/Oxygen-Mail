@@ -4,16 +4,13 @@ import austeretony.alternateui.util.EnumGUIAlignment;
 import austeretony.oxygen_core.client.api.EnumBaseClientSetting;
 import austeretony.oxygen_core.client.api.EnumBaseGUISetting;
 import austeretony.oxygen_core.client.gui.OxygenGUIUtils;
-import austeretony.oxygen_core.client.gui.elements.OxygenIndexedPanelEntry;
+import austeretony.oxygen_core.client.gui.elements.OxygenWrapperPanelEntry;
 import austeretony.oxygen_core.common.item.ItemStackWrapper;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.item.ItemStack;
 
-public class InventoryItemPanelEntry extends OxygenIndexedPanelEntry<ItemStack> {
-
-    public final ItemStackWrapper stackWrapper;
+public class InventoryItemPanelEntry extends OxygenWrapperPanelEntry<ItemStackWrapper> {
 
     private String playerStockStr;
 
@@ -22,15 +19,14 @@ public class InventoryItemPanelEntry extends OxygenIndexedPanelEntry<ItemStack> 
     private final boolean singleItem, enableDurabilityBar;   
 
     public InventoryItemPanelEntry(ItemStackWrapper stackWrapper, int playerStock) {
-        super(stackWrapper.getCachedItemStack());
-        this.stackWrapper = stackWrapper;
+        super(stackWrapper);
         this.playerStock = playerStock;
         this.playerStockStr = String.valueOf(playerStock);
         this.singleItem = playerStock == 1;
         this.enableDurabilityBar = EnumBaseClientSetting.ENABLE_ITEMS_DURABILITY_BAR.get().asBoolean();
         this.setDynamicBackgroundColor(EnumBaseGUISetting.ELEMENT_ENABLED_COLOR.get().asInt(), EnumBaseGUISetting.ELEMENT_DISABLED_COLOR.get().asInt(), EnumBaseGUISetting.ELEMENT_HOVERED_COLOR.get().asInt());
         this.setTextDynamicColor(EnumBaseGUISetting.TEXT_ENABLED_COLOR.get().asInt(), EnumBaseGUISetting.TEXT_DISABLED_COLOR.get().asInt(), EnumBaseGUISetting.TEXT_HOVERED_COLOR.get().asInt());
-        this.setDisplayText(this.index.getDisplayName());
+        this.setDisplayText(stackWrapper.getCachedItemStack().getDisplayName());
     }
 
     @Override
@@ -38,13 +34,13 @@ public class InventoryItemPanelEntry extends OxygenIndexedPanelEntry<ItemStack> 
         if (this.isVisible()) {        
             RenderHelper.enableGUIStandardItemLighting();            
             GlStateManager.enableDepth();
-            this.itemRender.renderItemAndEffectIntoGUI(this.index, this.getX() + 2, this.getY());   
+            this.itemRender.renderItemAndEffectIntoGUI(this.wrapped.getCachedItemStack(), this.getX() + 2, this.getY());   
 
             if (this.enableDurabilityBar) {
-                FontRenderer font = this.index.getItem().getFontRenderer(this.index);
+                FontRenderer font = this.wrapped.getCachedItemStack().getItem().getFontRenderer(this.wrapped.getCachedItemStack());
                 if (font == null) 
                     font = this.mc.fontRenderer;
-                this.itemRender.renderItemOverlayIntoGUI(font, this.index, this.getX() + 2, this.getY(), null);
+                this.itemRender.renderItemOverlayIntoGUI(font, this.wrapped.getCachedItemStack(), this.getX() + 2, this.getY(), null);
             }
 
             GlStateManager.disableDepth();
@@ -97,7 +93,7 @@ public class InventoryItemPanelEntry extends OxygenIndexedPanelEntry<ItemStack> 
     @Override
     public void drawTooltip(int mouseX, int mouseY) {
         if (mouseX >= this.getX() + 2 && mouseY >= this.getY() && mouseX < this.getX() + 18 && mouseY < this.getY() + this.getHeight())
-            this.screen.drawToolTip(this.index, mouseX + 6, mouseY);
+            this.screen.drawToolTip(this.wrapped.getCachedItemStack(), mouseX + 6, mouseY);
     }
 
     public int getPlayerStock() {

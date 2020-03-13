@@ -8,10 +8,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.annotation.Nonnull;
+
+import austeretony.oxygen_core.common.main.OxygenMain;
 import austeretony.oxygen_core.common.persistent.AbstractPersistentData;
 import austeretony.oxygen_core.common.util.StreamUtils;
 import austeretony.oxygen_core.server.api.OxygenHelperServer;
-import austeretony.oxygen_mail.common.main.MailMain;
 
 public class MailboxesContainerServer extends AbstractPersistentData {
 
@@ -29,6 +31,7 @@ public class MailboxesContainerServer extends AbstractPersistentData {
         this.mailboxes.put(playerUUID, new Mailbox(playerUUID));
     }
 
+    @Nonnull
     public Mailbox getPlayerMailbox(UUID playerUUID) {
         Mailbox mailbox = this.mailboxes.get(playerUUID);
         if (mailbox == null) {
@@ -40,12 +43,12 @@ public class MailboxesContainerServer extends AbstractPersistentData {
 
     @Override
     public String getDisplayName() {
-        return "mailboxes";
+        return "mail:mailboxes_server";
     }
 
     @Override
     public String getPath() {
-        return OxygenHelperServer.getDataFolder() + "/server/world/mail/mailboxes.dat";
+        return OxygenHelperServer.getDataFolder() + "/server/world/mail/mail_server.dat";
     }
 
     @Override
@@ -61,9 +64,9 @@ public class MailboxesContainerServer extends AbstractPersistentData {
         Mailbox mailbox;
         for (int i = 0; i < amount; i++) {
             mailbox = Mailbox.read(bis);
-            this.mailboxes.put(mailbox.playerUUID, mailbox);
+            this.mailboxes.put(mailbox.getPlayerUUID(), mailbox);
         }
-        MailMain.LOGGER.info("Loaded {} mailboxes.", amount);
+        OxygenMain.LOGGER.info("[Mail] Loaded {} mailboxes.", amount);
         MailManagerServer.instance().getMailboxesManager().processExpiredMail();
     }
 

@@ -8,10 +8,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.annotation.Nullable;
+
 import austeretony.oxygen_core.client.api.OxygenHelperClient;
 import austeretony.oxygen_core.common.persistent.AbstractPersistentData;
 import austeretony.oxygen_core.common.util.StreamUtils;
-import austeretony.oxygen_mail.common.Mail;
+import austeretony.oxygen_mail.common.mail.Mail;
 import io.netty.util.internal.ConcurrentSet;
 
 public class MailboxContainerClient extends AbstractPersistentData {
@@ -32,6 +34,7 @@ public class MailboxContainerClient extends AbstractPersistentData {
         return this.mail.keySet();
     }
 
+    @Nullable
     public Mail getMessage(long messageId) {
         return this.mail.get(messageId);
     }
@@ -58,12 +61,12 @@ public class MailboxContainerClient extends AbstractPersistentData {
 
     @Override
     public String getDisplayName() {
-        return "mailbox";
+        return "mail:mailbox_client";
     }
 
     @Override
     public String getPath() {
-        return OxygenHelperClient.getDataFolder() + "/client/players/" + OxygenHelperClient.getPlayerUUID() + "/mail/mailbox.dat";
+        return OxygenHelperClient.getDataFolder() + "/client/players/" + OxygenHelperClient.getPlayerUUID() + "/mail/mail_client.dat";
     }
 
     @Override

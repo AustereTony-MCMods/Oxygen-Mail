@@ -2,13 +2,19 @@ package austeretony.oxygen_mail.client;
 
 import austeretony.oxygen_core.client.api.ClientReference;
 import austeretony.oxygen_mail.client.gui.mail.MailMenuScreen;
-import austeretony.oxygen_mail.common.Parcel;
+import austeretony.oxygen_mail.common.mail.Attachment;
+import austeretony.oxygen_mail.common.mail.EnumMail;
+import austeretony.oxygen_mail.common.mail.Mail;
 
 public class MailMenuManager {
 
-    public void openMailMenu() {
+    public static void openMailMenu() {
         ClientReference.displayGuiScreen(new MailMenuScreen());
     }
+
+    public static void openMailMenuDelegated() {
+        ClientReference.delegateToClientThread(MailMenuManager::openMailMenu);
+    } 
 
     public void sharedDataSynchronized() {
         ClientReference.delegateToClientThread(()->{
@@ -24,10 +30,10 @@ public class MailMenuManager {
         });
     }
 
-    public void messageSent(Parcel parcel, long balance) {
+    public void mailSent(EnumMail type, Attachment attachment, long balance) {
         ClientReference.delegateToClientThread(()->{
             if (isMenuOpened())
-                ((MailMenuScreen) ClientReference.getCurrentScreen()).messageSent(parcel, balance);
+                ((MailMenuScreen) ClientReference.getCurrentScreen()).mailSent(type, attachment, balance);
         });
     }
 
@@ -38,10 +44,10 @@ public class MailMenuManager {
         });
     }
 
-    public void attachmentReceived(long oldMessageId, Parcel parcel, long balance) {
+    public void attachmentReceived(long oldMessageId, Mail mail, long balance) {
         ClientReference.delegateToClientThread(()->{
             if (isMenuOpened())
-                ((MailMenuScreen) ClientReference.getCurrentScreen()).attachmentReceived(oldMessageId, parcel, balance);
+                ((MailMenuScreen) ClientReference.getCurrentScreen()).attachmentReceived(oldMessageId, mail, balance);
         });
     }
 

@@ -1,4 +1,4 @@
-package austeretony.oxygen_mail.common;
+package austeretony.oxygen_mail.common.mail;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -18,6 +18,8 @@ public class Mail implements PersistentEntry, SynchronousEntry {
     MESSAGE_SUBJECT_MAX_LENGTH = 24,
     MESSAGE_MAX_LENGTH = 800;
 
+    public static final String SYSTEM_SENDER = "mail.sender.sys";
+
     public static final UUID SYSTEM_UUID = UUID.fromString("d10d07f6-ae3c-4ec6-a055-1160c4cf848a");
 
     private long messageId;
@@ -28,24 +30,25 @@ public class Mail implements PersistentEntry, SynchronousEntry {
 
     private String senderName, subject, message;
 
-    private long currency;
+    private String[] messageArgs;
 
-    private Parcel parcel;
+    private Attachment attachment;
 
     private boolean pending;
 
     public Mail() {}
 
-    public Mail(long messageId, EnumMail type, UUID senderUUID, String senderName, String subject, String message, long currency, Parcel parcel) {
+    public Mail(long messageId, EnumMail type, UUID senderUUID, String senderName, String subject, Attachment attachment, String message, String... messageArguments) {
         this.messageId = messageId;
         this.type = type;
         this.senderUUID = senderUUID;
         this.senderName = senderName;
         this.subject = subject;
+        this.attachment = attachment;
         this.message = message;
-        this.currency = currency;
-        this.parcel = parcel;
-        if (currency > 0L || parcel != null)
+        this.messageArgs = messageArguments;
+
+        if (type != EnumMail.LETTER)
             this.pending = true;
     }
 
@@ -66,7 +69,11 @@ public class Mail implements PersistentEntry, SynchronousEntry {
         return this.senderUUID;
     }
 
-    public String getSenderUsername() {
+    public boolean isSystemMessage() {
+        return this.senderUUID.equals(SYSTEM_UUID);
+    }
+
+    public String getSenderName() {
         return this.senderName;
     }
 
@@ -78,49 +85,36 @@ public class Mail implements PersistentEntry, SynchronousEntry {
         return this.message;
     }
 
-    public long getCurrency() {
-        return this.currency;
+    public String[] getMessageArguments() {
+        return this.messageArgs;
     }
 
-    public Parcel getParcel() {
-        return this.parcel;
+    public Attachment getAttachment() {
+        return this.attachment;
     }
 
     public boolean isPending() {
         return this.pending;
     }  
 
-    public void setPending(boolean flag) {
-        this.pending = flag;
-        if (!flag) {
-            this.currency = 0L;
-            this.parcel = null;
-        }
+    public void attachmentReceived() {
+        this.pending = false;
     }
 
     public boolean isExpired() {
         int expiresInHours = - 1;
         switch (this.type) {
-        case SYSTEM_LETTER:
-            expiresInHours = MailConfig.SYSTEM_LETTER_EXPIRE_TIME_HOURS.asInt();
-            break;
         case LETTER:
-            expiresInHours = MailConfig.LETTER_EXPIRE_TIME_HOURS.asInt();
-            break;
-        case SYSTEM_REMITTANCE:
-            expiresInHours = MailConfig.SYSTEM_REMITTANCE_EXPIRE_TIME_HOURS.asInt();
+            expiresInHours = this.isSystemMessage() ? MailConfig.SYSTEM_LETTER_EXPIRE_TIME_HOURS.asInt() : MailConfig.LETTER_EXPIRE_TIME_HOURS.asInt();
             break;
         case REMITTANCE:
-            expiresInHours = MailConfig.REMITTANCE_EXPIRE_TIME_HOURS.asInt();
+            expiresInHours = this.isSystemMessage()? MailConfig.SYSTEM_REMITTANCE_EXPIRE_TIME_HOURS.asInt() : MailConfig.REMITTANCE_EXPIRE_TIME_HOURS.asInt();
             break;
-        case SYSTEM_PACKAGE:
-            expiresInHours = MailConfig.SYSTEM_PACKAGE_EXPIRE_TIME_HOURS.asInt();
+        case PARCEL:
+            expiresInHours = this.isSystemMessage() ? MailConfig.SYSTEM_PARCEL_EXPIRE_TIME_HOURS.asInt() : MailConfig.PARCEL_EXPIRE_TIME_HOURS.asInt();
             break;
-        case PACKAGE:
-            expiresInHours = MailConfig.PACKAGE_EXPIRE_TIME_HOURS.asInt();
-            break;
-        case PACKAGE_WITH_COD:
-            expiresInHours = MailConfig.PACKAGE_WITH_COD_EXPIRE_TIME_HOURS.asInt();
+        case COD:
+            expiresInHours = MailConfig.COD_EXPIRE_TIME_HOURS.asInt();
             break;  
         }
         if (expiresInHours < 0)
@@ -135,25 +129,30 @@ public class Mail implements PersistentEntry, SynchronousEntry {
         StreamUtils.write(this.senderUUID, bos);
         StreamUtils.write(this.senderName, bos);
         StreamUtils.write(this.subject, bos);
+
         StreamUtils.write(this.message, bos);
-        StreamUtils.write(this.currency, bos);
-        StreamUtils.write(this.parcel == null ? false : true, bos);
-        if (this.parcel != null)
-            this.parcel.write(bos);
+        StreamUtils.write((byte) this.messageArgs.length, bos);
+        for (String arg : this.messageArgs)
+            StreamUtils.write(arg, bos);
+
+        this.attachment.write(bos);
         StreamUtils.write(this.pending, bos);
     }
 
     @Override
     public void read(BufferedInputStream bis) throws IOException {        
         this.messageId = StreamUtils.readLong(bis);
-        this.type = EnumMail.values()[bis.read()]; 
+        this.type = EnumMail.values()[StreamUtils.readByte(bis)]; 
         this.senderUUID = StreamUtils.readUUID(bis);
         this.senderName = StreamUtils.readString(bis);
         this.subject = StreamUtils.readString(bis);
+
         this.message = StreamUtils.readString(bis);
-        this.currency = StreamUtils.readLong(bis);
-        if (StreamUtils.readBoolean(bis))
-            this.parcel = Parcel.read(bis);
+        this.messageArgs = new String[StreamUtils.readByte(bis)];
+        for (int i = 0; i < this.messageArgs.length; i++)
+            this.messageArgs[i] = StreamUtils.readString(bis);
+
+        this.attachment = this.type.readAttachment(bis);
         this.pending = StreamUtils.readBoolean(bis);
     }
 
@@ -164,11 +163,13 @@ public class Mail implements PersistentEntry, SynchronousEntry {
         ByteBufUtils.writeUUID(this.senderUUID, buffer);
         ByteBufUtils.writeString(this.senderName, buffer);
         ByteBufUtils.writeString(this.subject, buffer);
+
         ByteBufUtils.writeString(this.message, buffer);
-        buffer.writeLong(this.currency);
-        buffer.writeBoolean(this.parcel == null ? false : true);
-        if (this.parcel != null)
-            this.parcel.write(buffer);
+        buffer.writeByte(this.messageArgs.length);
+        for (String arg : this.messageArgs)
+            ByteBufUtils.writeString(arg, buffer);
+
+        this.attachment.write(buffer);
         buffer.writeBoolean(this.pending);
     }
 
@@ -179,10 +180,13 @@ public class Mail implements PersistentEntry, SynchronousEntry {
         this.senderUUID = ByteBufUtils.readUUID(buffer);
         this.senderName = ByteBufUtils.readString(buffer);
         this.subject = ByteBufUtils.readString(buffer);
+
         this.message = ByteBufUtils.readString(buffer);
-        this.currency = buffer.readLong();
-        if (buffer.readBoolean())
-            this.parcel = Parcel.read(buffer);
+        this.messageArgs = new String[buffer.readByte()];
+        for (int i = 0; i < this.messageArgs.length; i++)
+            this.messageArgs[i] = ByteBufUtils.readString(buffer);
+
+        this.attachment = this.type.readAttachment(buffer);
         this.pending = buffer.readBoolean();
     }
 }

@@ -4,7 +4,7 @@ import java.util.Set;
 
 import austeretony.oxygen_core.client.sync.DataSyncHandlerClient;
 import austeretony.oxygen_core.client.sync.DataSyncListener;
-import austeretony.oxygen_mail.common.Mail;
+import austeretony.oxygen_mail.common.mail.Mail;
 import austeretony.oxygen_mail.common.main.MailMain;
 
 public class MailDataSyncHandlerClient implements DataSyncHandlerClient<Mail> {

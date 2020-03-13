@@ -1,8 +1,5 @@
 package austeretony.oxygen_mail.common.main;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import austeretony.oxygen_core.client.api.OxygenGUIHelper;
 import austeretony.oxygen_core.client.api.OxygenHelperClient;
 import austeretony.oxygen_core.client.command.CommandOxygenClient;
@@ -11,6 +8,7 @@ import austeretony.oxygen_core.common.api.CommonReference;
 import austeretony.oxygen_core.common.api.OxygenHelperCommon;
 import austeretony.oxygen_core.common.main.OxygenMain;
 import austeretony.oxygen_core.common.privilege.PrivilegeUtils;
+import austeretony.oxygen_core.server.OxygenManagerServer;
 import austeretony.oxygen_core.server.api.OxygenHelperServer;
 import austeretony.oxygen_core.server.api.PrivilegesProviderServer;
 import austeretony.oxygen_core.server.command.CommandOxygenOperator;
@@ -27,7 +25,7 @@ import austeretony.oxygen_mail.client.settings.gui.EnumMailGUISetting;
 import austeretony.oxygen_mail.common.config.MailConfig;
 import austeretony.oxygen_mail.common.network.client.CPAttachmentReceived;
 import austeretony.oxygen_mail.common.network.client.CPMessageRemoved;
-import austeretony.oxygen_mail.common.network.client.CPMessageSent;
+import austeretony.oxygen_mail.common.network.client.CPMailSent;
 import austeretony.oxygen_mail.common.network.server.SPMessageOperation;
 import austeretony.oxygen_mail.common.network.server.SPSendMessage;
 import austeretony.oxygen_mail.server.MailDataSyncHandlerServer;
@@ -44,7 +42,7 @@ import net.minecraftforge.fml.relauncher.Side;
         modid = MailMain.MODID, 
         name = MailMain.NAME, 
         version = MailMain.VERSION,
-        dependencies = "required-after:oxygen_core@[0.10.1,);",
+        dependencies = "required-after:oxygen_core@[0.11.0,);",
         certificateFingerprint = "@FINGERPRINT@",
         updateJSON = MailMain.VERSIONS_FORGE_URL)
 public class MailMain {
@@ -52,7 +50,7 @@ public class MailMain {
     public static final String 
     MODID = "oxygen_mail",
     NAME = "Oxygen: Mail",
-    VERSION = "0.10.1",
+    VERSION = "0.11.0",
     VERSION_CUSTOM = VERSION + ":beta:0",
     GAME_VERSION = "1.12.2",
     VERSIONS_FORGE_URL = "https://raw.githubusercontent.com/AustereTony-MCMods/Oxygen-Mail/info/mod_versions_forge.json";
@@ -67,8 +65,6 @@ public class MailMain {
     INCOMING_MESSAGE_NOTIFICATION_ID = 80,
 
     MESSAGE_OPERATION_REQUEST_ID = 80;
-
-    public static final Logger LOGGER = LogManager.getLogger(NAME);
 
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
@@ -91,8 +87,7 @@ public class MailMain {
             CommonReference.registerEvent(new MailEventsClient());
             OxygenGUIHelper.registerOxygenMenuEntry(MailMenuScreen.MAIL_MENU_ENTRY);
             OxygenHelperClient.registerStatusMessagesHandler(new MailStatusMessagesHandler());
-            OxygenHelperClient.registerSharedDataSyncListener(MAIL_MENU_SCREEN_ID, 
-                    ()->MailManagerClient.instance().getMailMenuManager().sharedDataSynchronized());
+            OxygenHelperClient.registerSharedDataSyncListener(MAIL_MENU_SCREEN_ID, MailManagerClient.instance().getMailMenuManager()::sharedDataSynchronized);
             OxygenHelperClient.registerDataSyncHandler(new MailDataSyncHandlerClient());
             EnumMailClientSetting.register();
             EnumMailGUISetting.register();
@@ -107,18 +102,19 @@ public class MailMain {
                     PrivilegeUtils.getPrivilege(EnumMailPrivilege.MAIL_SENDING_COOLDOWN_SECONDS.id(), 10),
 
                     PrivilegeUtils.getPrivilege(EnumMailPrivilege.REMITTANCE_MAX_VALUE.id(), 1_000_000L),
-                    PrivilegeUtils.getPrivilege(EnumMailPrivilege.PACKAGE_WITH_COD_MAX_VALUE.id(), 1_000_000L),
+                    PrivilegeUtils.getPrivilege(EnumMailPrivilege.COD_MAX_VALUE.id(), 1_000_000L),
 
                     PrivilegeUtils.getPrivilege(EnumMailPrivilege.LETTER_POSTAGE_VALUE.id(), 0L),
                     PrivilegeUtils.getPrivilege(EnumMailPrivilege.REMITTANCE_POSTAGE_PERCENT.id(), 0),
-                    PrivilegeUtils.getPrivilege(EnumMailPrivilege.PACKAGE_POSTAGE_VALUE.id(), 0L),
-                    PrivilegeUtils.getPrivilege(EnumMailPrivilege.PACKAGE_WITH_COD_POSTAGE_PERCENT.id(), 0));
-            LOGGER.info("Default Operator role privileges added.");
+                    PrivilegeUtils.getPrivilege(EnumMailPrivilege.PARCEL_POSTAGE_VALUE.id(), 0L),
+                    PrivilegeUtils.getPrivilege(EnumMailPrivilege.COD_POSTAGE_PERCENT.id(), 0));
+            OxygenManagerServer.instance().getPrivilegesContainer().markChanged();
+            OxygenMain.LOGGER.info("[Mail] Default Operator role privileges added.");
         }
     }
 
     private void initNetwork() {
-        OxygenMain.network().registerPacket(CPMessageSent.class);
+        OxygenMain.network().registerPacket(CPMailSent.class);
         OxygenMain.network().registerPacket(CPMessageRemoved.class);
         OxygenMain.network().registerPacket(CPAttachmentReceived.class);
 

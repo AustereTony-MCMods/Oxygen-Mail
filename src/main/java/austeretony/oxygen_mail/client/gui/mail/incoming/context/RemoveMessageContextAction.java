@@ -20,7 +20,7 @@ public class RemoveMessageContextAction implements OxygenContextMenuAction {
 
     @Override
     public boolean isValid(GUIBaseElement currElement) {
-        return !this.section.getCurrentMessage().isPending();
+        return this.section.getRemoveMessageButton().isEnabled();
     }
 
     @Override

@@ -10,13 +10,13 @@ public enum EnumMailPrivilege {
     MAIL_SENDING_COOLDOWN_SECONDS("mail:mailSendingCooldownSeconds", 802, EnumValueType.INT),
 
     REMITTANCE_MAX_VALUE("mail:remittanceMaxValue", 820, EnumValueType.LONG),
-    PACKAGE_MAX_AMOUNT("mail:packageMaxAmount", 821, EnumValueType.INT),
-    PACKAGE_WITH_COD_MAX_VALUE("mail:packageWithCODMaxValue", 822, EnumValueType.LONG),
+    PARCEL_MAX_AMOUNT("mail:parcelMaxAmount", 821, EnumValueType.INT),
+    COD_MAX_VALUE("mail:CODMaxValue", 822, EnumValueType.LONG),
 
     LETTER_POSTAGE_VALUE("mail:letterPostageValue", 830, EnumValueType.LONG),
     REMITTANCE_POSTAGE_PERCENT("mail:remittancePostagePercent", 831, EnumValueType.INT),
-    PACKAGE_POSTAGE_VALUE("mail:packagePostageValue", 832, EnumValueType.LONG),
-    PACKAGE_WITH_COD_POSTAGE_PERCENT("mail:packageWithCODPostagePercent", 833, EnumValueType.INT);
+    PARCEL_POSTAGE_VALUE("mail:parcelPostageValue", 832, EnumValueType.LONG),
+    COD_POSTAGE_PERCENT("mail:CODPostagePercent", 833, EnumValueType.INT);
 
     private final String name;
 
@@ -39,7 +39,7 @@ public enum EnumMailPrivilege {
     }
 
     public static void register() {
-        for (EnumMailPrivilege privilege : EnumMailPrivilege.values())
+        for (EnumMailPrivilege privilege : values())
             PrivilegeRegistry.registerPrivilege(privilege.name, privilege.id, privilege.type);
     }
 }

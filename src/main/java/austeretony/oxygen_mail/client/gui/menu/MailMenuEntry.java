@@ -1,17 +1,17 @@
 package austeretony.oxygen_mail.client.gui.menu;
 
-import org.lwjgl.input.Keyboard;
-
 import austeretony.oxygen_core.client.api.ClientReference;
 import austeretony.oxygen_core.client.gui.menu.OxygenMenuEntry;
-import austeretony.oxygen_mail.client.MailManagerClient;
+import austeretony.oxygen_mail.client.MailMenuManager;
 import austeretony.oxygen_mail.client.settings.EnumMailClientSetting;
+import austeretony.oxygen_mail.common.config.MailConfig;
+import austeretony.oxygen_mail.common.main.MailMain;
 
 public class MailMenuEntry implements OxygenMenuEntry {
 
     @Override
     public int getId() {
-        return 80;
+        return MailMain.MAIL_MENU_SCREEN_ID;
     }
 
     @Override
@@ -21,7 +21,7 @@ public class MailMenuEntry implements OxygenMenuEntry {
 
     @Override
     public int getKeyCode() {
-        return Keyboard.KEY_M;
+        return MailConfig.MAIL_MENU_KEY.asInt();
     }
 
     @Override
@@ -31,6 +31,6 @@ public class MailMenuEntry implements OxygenMenuEntry {
 
     @Override
     public void open() {
-        MailManagerClient.instance().getMailMenuManager().openMailMenu();
+        MailMenuManager.openMailMenu();
     }
 }

@@ -5,9 +5,13 @@ import java.util.UUID;
 import austeretony.oxygen_core.common.PlayerSharedData;
 import austeretony.oxygen_core.common.api.CommonReference;
 import austeretony.oxygen_core.common.command.ArgumentExecutor;
+import austeretony.oxygen_core.common.item.ItemStackWrapper;
 import austeretony.oxygen_core.server.OxygenManagerServer;
+import austeretony.oxygen_core.server.api.CurrencyHelperServer;
 import austeretony.oxygen_core.server.api.OxygenHelperServer;
-import austeretony.oxygen_mail.common.Parcel;
+import austeretony.oxygen_mail.common.mail.Attachments;
+import austeretony.oxygen_mail.common.mail.EnumMail;
+import austeretony.oxygen_mail.common.mail.Mail;
 import austeretony.oxygen_mail.server.api.MailHelperServer;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
@@ -15,7 +19,6 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.command.PlayerNotFoundException;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.TextComponentString;
@@ -35,7 +38,7 @@ public class MailArgumentOperator implements ArgumentExecutor {
         //Text specified in brackets ({}): subject MUST present, message may be empty (use empty brackets - {}).
         //
         //Letter - /oxygens mail -send @a 0 {Letter} {Some dummy message to yourself.}
-        //Remittance - /oxygens mail -send AustereTony 1 {Remittance} {Some dummy message for AustereTony.} 10000
+        //Remittance - /oxygens mail -send AustereTony 1 {Remittance} {1000 coins for you!} 0 10000
         //Package - /oxygens mail -send -all-online 2 {Gift} {Some dummy message for anyone ONLINE.} 10 minecraft:diamond (if last argument is absent, held item will be used) 
         //property '-all' allows to send message to EVERY player ever logged in.
 
@@ -96,7 +99,14 @@ public class MailArgumentOperator implements ArgumentExecutor {
                     for (UUID playerUUID : OxygenHelperServer.getOnlinePlayersUUIDs()) {
                         switch (messageType) {
                         case 0:
-                            MailHelperServer.sendSystemLetter(playerUUID, "mail.sender.sys", subject, message, true);
+                            MailHelperServer.sendSystemMail(
+                                    playerUUID, 
+                                    Mail.SYSTEM_SENDER, 
+                                    EnumMail.LETTER,
+                                    subject, 
+                                    Attachments.dummy(),
+                                    true,
+                                    message);
 
                             if (!notified) {
                                 notified = true;
@@ -114,8 +124,19 @@ public class MailArgumentOperator implements ArgumentExecutor {
                         case 1:
                             index++;
                             if (index < args.length) {
-                                long remittance = CommandBase.parseLong(args[index], 0, Long.MAX_VALUE);
-                                MailHelperServer.sendSystemRemittance(playerUUID, "mail.sender.sys", subject, message, remittance, true);
+                                int currencyIndex = CommandBase.parseInt(args[index], 0, 127);
+                                if (CurrencyHelperServer.getCurrencyProvider(currencyIndex) == null)
+                                    throw new WrongUsageException("Invalid currency index: %s", currencyIndex);
+
+                                long value = CommandBase.parseLong(args[++index], 0, Long.MAX_VALUE);                                
+                                MailHelperServer.sendSystemMail(
+                                        playerUUID, 
+                                        Mail.SYSTEM_SENDER, 
+                                        EnumMail.REMITTANCE,
+                                        subject, 
+                                        Attachments.remittance(currencyIndex, value),
+                                        true,
+                                        message);
 
                                 if (!notified) {
                                     notified = true;
@@ -124,12 +145,12 @@ public class MailArgumentOperator implements ArgumentExecutor {
                                                 "ALL-ONLINE",
                                                 subject,
                                                 message,
-                                                remittance)); 
+                                                value)); 
                                     else
                                         server.sendMessage(new TextComponentString(String.format("Remittance sent to <all-online> - subject: %s, message: %s, value: %s", 
                                                 subject,
                                                 message,
-                                                remittance)));
+                                                value)));
                                 }
                             } else
                                 throw new WrongUsageException("Invalid remittance value!");
@@ -138,19 +159,26 @@ public class MailArgumentOperator implements ArgumentExecutor {
                             index++;
                             if (index < args.length) {
                                 int amount = CommandBase.parseInt(args[index++], 0, 1000);
-                                Parcel parcel;
-                                if (index < args.length) {
-                                    Item item = CommandBase.getItemByText(sender, args[index]);
-                                    parcel = Parcel.create(new ItemStack(item), amount);
-                                } else {
+                                ItemStack itemStack;
+                                if (index < args.length)
+                                    itemStack = new ItemStack(CommandBase.getItemByText(sender, args[index]));
+                                else {
                                     if (sender instanceof MinecraftServer)
                                         throw new WrongUsageException("Invalid item registry name!");
                                     if (senderPlayerMP.getHeldItemMainhand() != ItemStack.EMPTY)
-                                        parcel = Parcel.create(senderPlayerMP.getHeldItemMainhand().copy(), amount);
+                                        itemStack = senderPlayerMP.getHeldItemMainhand().copy();
                                     else
                                         throw new WrongUsageException("Main hand is empty!");
                                 }
-                                MailHelperServer.sendSystemPackage(playerUUID, "mail.sender.sys", subject, message, parcel, true);
+
+                                MailHelperServer.sendSystemMail(
+                                        playerUUID, 
+                                        Mail.SYSTEM_SENDER, 
+                                        EnumMail.PARCEL,
+                                        subject, 
+                                        Attachments.parcel(ItemStackWrapper.of(itemStack), amount),
+                                        true,
+                                        message);
 
                                 if (!notified) {
                                     notified = true;
@@ -160,13 +188,13 @@ public class MailArgumentOperator implements ArgumentExecutor {
                                                 subject,
                                                 message,
                                                 amount,
-                                                parcel.stackWrapper.getCachedItemStack().getDisplayName())); 
+                                                itemStack.getDisplayName())); 
                                     else
                                         server.sendMessage(new TextComponentString(String.format("Package sent to <all-online> - subject: %s, message: %s, amount: %s, item: %s", 
                                                 subject,
                                                 message,
                                                 amount,
-                                                parcel.stackWrapper.getCachedItemStack().getDisplayName())));
+                                                itemStack.getDisplayName())));
                                 }
                             } else
                                 throw new WrongUsageException("Invalid items amount!");
@@ -177,8 +205,15 @@ public class MailArgumentOperator implements ArgumentExecutor {
                     boolean notified = false;
                     for (PlayerSharedData sharedData : OxygenManagerServer.instance().getSharedDataManager().getPlayersSharedData()) {
                         switch (messageType) {
-                        case 0:
-                            MailHelperServer.sendSystemLetter(sharedData.getPlayerUUID(), "mail.sender.sys", subject, message, true);
+                        case 0:                            
+                            MailHelperServer.sendSystemMail(
+                                    sharedData.getPlayerUUID(), 
+                                    Mail.SYSTEM_SENDER, 
+                                    EnumMail.LETTER,
+                                    subject, 
+                                    Attachments.dummy(),
+                                    true,
+                                    message);
 
                             if (!notified) {
                                 notified = true;
@@ -196,8 +231,19 @@ public class MailArgumentOperator implements ArgumentExecutor {
                         case 1:
                             index++;
                             if (index < args.length) {
-                                long remittance = CommandBase.parseLong(args[index], 0, Long.MAX_VALUE);
-                                MailHelperServer.sendSystemRemittance(sharedData.getPlayerUUID(), "mail.sender.sys", subject, message, remittance, true);
+                                int currencyIndex = CommandBase.parseInt(args[index], 0, 127);
+                                if (CurrencyHelperServer.getCurrencyProvider(currencyIndex) == null)
+                                    throw new WrongUsageException("Invalid currency index: %s", currencyIndex);
+
+                                long value = CommandBase.parseLong(args[++index], 0, Long.MAX_VALUE);
+                                MailHelperServer.sendSystemMail(
+                                        sharedData.getPlayerUUID(), 
+                                        Mail.SYSTEM_SENDER, 
+                                        EnumMail.REMITTANCE,
+                                        subject, 
+                                        Attachments.remittance(currencyIndex, value),
+                                        true,
+                                        message);
 
                                 if (!notified) {
                                     notified = true;
@@ -206,12 +252,12 @@ public class MailArgumentOperator implements ArgumentExecutor {
                                                 "ALL",
                                                 subject,
                                                 message,
-                                                remittance)); 
+                                                value)); 
                                     else
                                         server.sendMessage(new TextComponentString(String.format("Remittance sent to <all> - subject: %s, message: %s, value: %s", 
                                                 subject,
                                                 message,
-                                                remittance)));
+                                                value)));
                                 }
                             } else
                                 throw new WrongUsageException("Invalid remittance value!");
@@ -220,19 +266,26 @@ public class MailArgumentOperator implements ArgumentExecutor {
                             index++;
                             if (index < args.length) {
                                 int amount = CommandBase.parseInt(args[index++], 0, 1000);
-                                Parcel parcel;
-                                if (index < args.length) {
-                                    Item item = CommandBase.getItemByText(sender, args[index]);
-                                    parcel = Parcel.create(new ItemStack(item), amount);
-                                } else {
-                                    if (!(sender instanceof EntityPlayerMP))
+                                ItemStack itemStack;
+                                if (index < args.length)
+                                    itemStack = new ItemStack(CommandBase.getItemByText(sender, args[index]));
+                                else {
+                                    if (sender instanceof MinecraftServer)
                                         throw new WrongUsageException("Invalid item registry name!");
                                     if (senderPlayerMP.getHeldItemMainhand() != ItemStack.EMPTY)
-                                        parcel = Parcel.create(senderPlayerMP.getHeldItemMainhand().copy(), amount);
+                                        itemStack = senderPlayerMP.getHeldItemMainhand().copy();
                                     else
                                         throw new WrongUsageException("Main hand is empty!");
                                 }
-                                MailHelperServer.sendSystemPackage(sharedData.getPlayerUUID(), "mail.sender.sys", subject, message, parcel, true);
+
+                                MailHelperServer.sendSystemMail(
+                                        sharedData.getPlayerUUID(), 
+                                        Mail.SYSTEM_SENDER, 
+                                        EnumMail.PARCEL,
+                                        subject, 
+                                        Attachments.parcel(ItemStackWrapper.of(itemStack), amount),
+                                        true,
+                                        message);
 
                                 if (!notified) {
                                     notified = true;
@@ -242,13 +295,13 @@ public class MailArgumentOperator implements ArgumentExecutor {
                                                 subject,
                                                 message,
                                                 amount,
-                                                parcel.stackWrapper.getCachedItemStack().getDisplayName())); 
+                                                itemStack.getDisplayName())); 
                                     else
                                         server.sendMessage(new TextComponentString(String.format("Package sent to <all> - subject: %s, message: %s, amount: %s, item: %s", 
                                                 subject,
                                                 message,
                                                 amount,
-                                                parcel.stackWrapper.getCachedItemStack().getDisplayName())));
+                                                itemStack.getDisplayName())));
                                 }
                             } else
                                 throw new WrongUsageException("Invalid items amount!");
@@ -270,8 +323,15 @@ public class MailArgumentOperator implements ArgumentExecutor {
                     if (sharedData == null) return;
 
                     switch (messageType) {
-                    case 0:
-                        MailHelperServer.sendSystemLetter(sharedData.getPlayerUUID(), "mail.sender.sys", subject, message, true);
+                    case 0:                        
+                        MailHelperServer.sendSystemMail(
+                                sharedData.getPlayerUUID(), 
+                                Mail.SYSTEM_SENDER, 
+                                EnumMail.LETTER,
+                                subject, 
+                                Attachments.dummy(),
+                                true,
+                                message);
 
                         if (sender instanceof EntityPlayerMP)
                             senderPlayerMP.sendMessage(new TextComponentTranslation("oxygen_mail.message.command.oxygens.mail.letterSent", 
@@ -287,21 +347,32 @@ public class MailArgumentOperator implements ArgumentExecutor {
                     case 1:
                         index++;
                         if (index < args.length) {
-                            long remittance = CommandBase.parseLong(args[index], 0, Long.MAX_VALUE);
-                            MailHelperServer.sendSystemRemittance(sharedData.getPlayerUUID(), "mail.sender.sys", subject, message, remittance, true);
+                            int currencyIndex = CommandBase.parseInt(args[index], 0, 127);
+                            if (CurrencyHelperServer.getCurrencyProvider(currencyIndex) == null)
+                                throw new WrongUsageException("Invalid currency index: %s", currencyIndex);
+
+                            long value = CommandBase.parseLong(args[++index], 0, Long.MAX_VALUE);
+                            MailHelperServer.sendSystemMail(
+                                    sharedData.getPlayerUUID(), 
+                                    Mail.SYSTEM_SENDER, 
+                                    EnumMail.REMITTANCE,
+                                    subject, 
+                                    Attachments.remittance(currencyIndex, value),
+                                    true,
+                                    message);
 
                             if (sender instanceof EntityPlayerMP)
                                 senderPlayerMP.sendMessage(new TextComponentTranslation("oxygen_mail.message.command.oxygens.mail.remittanceSent", 
                                         sharedData.getUsername(),
                                         subject,
                                         message,
-                                        remittance)); 
+                                        value)); 
                             else
                                 server.sendMessage(new TextComponentString(String.format("Remittance sent to <%s> - subject: %s, message: %s, value: %s", 
                                         sharedData.getUsername(),
                                         subject,
                                         message,
-                                        remittance)));
+                                        value)));
                         } else
                             throw new WrongUsageException("Invalid remittance value!");
                         break;
@@ -309,19 +380,26 @@ public class MailArgumentOperator implements ArgumentExecutor {
                         index++;
                         if (index < args.length) {
                             int amount = CommandBase.parseInt(args[index++], 0, 1000);
-                            Parcel parcel;
-                            if (index < args.length) {
-                                Item item = CommandBase.getItemByText(sender, args[index]);
-                                parcel = Parcel.create(new ItemStack(item), amount);
-                            } else {
+                            ItemStack itemStack;
+                            if (index < args.length)
+                                itemStack = new ItemStack(CommandBase.getItemByText(sender, args[index]));
+                            else {
                                 if (sender instanceof MinecraftServer)
                                     throw new WrongUsageException("Invalid item registry name!");
                                 if (senderPlayerMP.getHeldItemMainhand() != ItemStack.EMPTY)
-                                    parcel = Parcel.create(senderPlayerMP.getHeldItemMainhand().copy(), amount);
+                                    itemStack = senderPlayerMP.getHeldItemMainhand().copy();
                                 else
                                     throw new WrongUsageException("Main hand is empty!");
                             }
-                            MailHelperServer.sendSystemPackage(sharedData.getPlayerUUID(), "mail.sender.sys", subject, message, parcel, true);
+
+                            MailHelperServer.sendSystemMail(
+                                    sharedData.getPlayerUUID(), 
+                                    Mail.SYSTEM_SENDER, 
+                                    EnumMail.PARCEL,
+                                    subject, 
+                                    Attachments.parcel(ItemStackWrapper.of(itemStack), amount),
+                                    true,
+                                    message);
 
                             if (sender instanceof EntityPlayerMP)
                                 senderPlayerMP.sendMessage(new TextComponentTranslation("oxygen_mail.message.command.oxygens.mail.packageSent", 
@@ -329,14 +407,14 @@ public class MailArgumentOperator implements ArgumentExecutor {
                                         subject,
                                         message,
                                         amount,
-                                        parcel.stackWrapper.getCachedItemStack().getDisplayName())); 
+                                        itemStack.getDisplayName())); 
                             else
                                 server.sendMessage(new TextComponentString(String.format("Package sent to <%s> - subject: %s, message: %s, amount: %s, item: %s", 
                                         sharedData.getUsername(),
                                         subject,
                                         message,
                                         amount,
-                                        parcel.stackWrapper.getCachedItemStack().getDisplayName())));
+                                        itemStack.getDisplayName())));
                         } else
                             throw new WrongUsageException("Invalid items amount!");
                         break;

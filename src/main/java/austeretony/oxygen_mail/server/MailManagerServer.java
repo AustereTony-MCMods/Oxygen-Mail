@@ -4,6 +4,9 @@ import java.util.concurrent.TimeUnit;
 
 import austeretony.oxygen_core.server.api.OxygenHelperServer;
 import austeretony.oxygen_core.server.item.ItemsBlackList;
+import austeretony.oxygen_mail.common.main.EnumMailStatusMessage;
+import austeretony.oxygen_mail.common.main.MailMain;
+import net.minecraft.entity.player.EntityPlayerMP;
 
 public final class MailManagerServer {
 
@@ -24,11 +27,7 @@ public final class MailManagerServer {
     }
 
     private void scheduleRepeatableProcesses() {
-        OxygenHelperServer.getSchedulerExecutorService().scheduleAtFixedRate(
-                ()->{
-                    this.mailboxesManager.processMailSendingQueue();
-                    this.mailboxesManager.processMailOperationsQueue();
-                }, 500L, 500L, TimeUnit.MILLISECONDS);
+        OxygenHelperServer.getSchedulerExecutorService().scheduleAtFixedRate(this.mailboxesManager::process, 500L, 500L, TimeUnit.MILLISECONDS);
     }
 
     public static void create() {
@@ -57,5 +56,9 @@ public final class MailManagerServer {
 
     public void worldLoaded() {
         OxygenHelperServer.loadPersistentDataAsync(this.mailboxesContainer);
+    }
+
+    public void sendStatusMessages(EntityPlayerMP playerMP, EnumMailStatusMessage status) {
+        OxygenHelperServer.sendStatusMessage(playerMP, MailMain.MAIL_MOD_INDEX, status.ordinal());
     }
 }

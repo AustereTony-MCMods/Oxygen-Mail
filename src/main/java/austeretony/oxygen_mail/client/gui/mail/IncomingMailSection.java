@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.Nullable;
+
 import org.lwjgl.input.Keyboard;
 
 import austeretony.alternateui.screen.button.GUIButton;
@@ -18,21 +20,20 @@ import austeretony.oxygen_core.client.api.OxygenGUIHelper;
 import austeretony.oxygen_core.client.api.PrivilegesProviderClient;
 import austeretony.oxygen_core.client.api.TimeHelperClient;
 import austeretony.oxygen_core.client.api.WatcherHelperClient;
-import austeretony.oxygen_core.client.gui.elements.OxygenButton;
 import austeretony.oxygen_core.client.gui.elements.OxygenContextMenu;
 import austeretony.oxygen_core.client.gui.elements.OxygenCurrencyValue;
+import austeretony.oxygen_core.client.gui.elements.OxygenDefaultBackgroundWithButtonsUnderlinedFiller;
 import austeretony.oxygen_core.client.gui.elements.OxygenInventoryLoad;
+import austeretony.oxygen_core.client.gui.elements.OxygenKeyButton;
 import austeretony.oxygen_core.client.gui.elements.OxygenScrollablePanel;
 import austeretony.oxygen_core.client.gui.elements.OxygenSectionSwitcher;
 import austeretony.oxygen_core.client.gui.elements.OxygenSorter;
 import austeretony.oxygen_core.client.gui.elements.OxygenSorter.EnumSorting;
 import austeretony.oxygen_core.client.gui.elements.OxygenTextLabel;
-import austeretony.oxygen_core.common.inventory.InventoryHelper;
 import austeretony.oxygen_core.common.main.OxygenMain;
 import austeretony.oxygen_core.common.util.MathUtils;
 import austeretony.oxygen_core.common.util.OxygenUtils;
 import austeretony.oxygen_mail.client.MailManagerClient;
-import austeretony.oxygen_mail.client.gui.mail.incoming.IncomingMailBackgroundFiller;
 import austeretony.oxygen_mail.client.gui.mail.incoming.MessagePanelEntry;
 import austeretony.oxygen_mail.client.gui.mail.incoming.callback.RemoveMessageCallback;
 import austeretony.oxygen_mail.client.gui.mail.incoming.callback.ReturnAttachmentCallback;
@@ -40,19 +41,19 @@ import austeretony.oxygen_mail.client.gui.mail.incoming.callback.TakeAttachmentC
 import austeretony.oxygen_mail.client.gui.mail.incoming.context.RemoveMessageContextAction;
 import austeretony.oxygen_mail.client.gui.mail.incoming.context.ReturnAttachmentContextAction;
 import austeretony.oxygen_mail.client.gui.mail.incoming.context.TakeAttachmentContextAction;
-import austeretony.oxygen_mail.common.EnumMail;
-import austeretony.oxygen_mail.common.Mail;
-import austeretony.oxygen_mail.common.Parcel;
 import austeretony.oxygen_mail.common.config.MailConfig;
+import austeretony.oxygen_mail.common.mail.Attachment;
+import austeretony.oxygen_mail.common.mail.EnumMail;
+import austeretony.oxygen_mail.common.mail.Mail;
 import austeretony.oxygen_mail.common.main.EnumMailPrivilege;
-import net.minecraft.item.ItemStack;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.util.text.TextFormatting;
 
 public class IncomingMailSection extends AbstractGUISection {
 
     private final MailMenuScreen screen;
 
-    private OxygenButton takeAttachmentButton, removeMessageButton;
+    private OxygenKeyButton takeAttachmentButton, removeMessageButton;
 
     private OxygenTextLabel messagesAmountLabel;
 
@@ -77,9 +78,8 @@ public class IncomingMailSection extends AbstractGUISection {
 
     //cache
 
-    private MessagePanelEntry currentMessageButton;
-
-    private Mail currentMessage;
+    @Nullable
+    private MessagePanelEntry currentMessageEntry;
 
     public IncomingMailSection(MailMenuScreen screen) {
         super(screen);
@@ -89,7 +89,11 @@ public class IncomingMailSection extends AbstractGUISection {
 
     @Override
     public void init() {
-        this.addElement(new IncomingMailBackgroundFiller(0, 0, this.getWidth(), this.getHeight()));
+        this.takeAttachmentCallback = new TakeAttachmentCallback(this.screen, this, 140, 36).enableDefaultBackground();
+        this.returnAttachmentCallback = new ReturnAttachmentCallback(this.screen, this, 140, 36).enableDefaultBackground();
+        this.removeMessageCallback = new RemoveMessageCallback(this.screen, this, 140, 36).enableDefaultBackground();
+
+        this.addElement(new OxygenDefaultBackgroundWithButtonsUnderlinedFiller(0, 0, this.getWidth(), this.getHeight()));
         this.addElement(new OxygenTextLabel(4, 12, ClientReference.localize("oxygen_mail.gui.mail.title"), EnumBaseGUISetting.TEXT_TITLE_SCALE.get().asFloat(), EnumBaseGUISetting.TEXT_ENABLED_COLOR.get().asInt()));
 
         this.addElement(new OxygenSectionSwitcher(this.getWidth() - 4, 5, this, this.screen.getSendingSection()));
@@ -98,7 +102,7 @@ public class IncomingMailSection extends AbstractGUISection {
 
         this.addElement(this.timeSorterElement = new OxygenSorter(6, 18, EnumSorting.DOWN, ClientReference.localize("oxygen_mail.sorting.receiveTime")));   
 
-        this.timeSorterElement.setClickListener((sorting)->{
+        this.timeSorterElement.setSortingListener((sorting)->{
             this.subjectSorterElement.reset();
             if (sorting == EnumSorting.DOWN)
                 this.sortMail(0);
@@ -108,7 +112,7 @@ public class IncomingMailSection extends AbstractGUISection {
 
         this.addElement(this.subjectSorterElement = new OxygenSorter(12, 18, EnumSorting.INACTIVE, ClientReference.localize("oxygen_mail.sorting.subject")));  
 
-        this.subjectSorterElement.setClickListener((sorting)->{
+        this.subjectSorterElement.setSortingListener((sorting)->{
             this.timeSorterElement.reset();
             if (sorting == EnumSorting.DOWN)
                 this.sortMail(2);
@@ -116,18 +120,18 @@ public class IncomingMailSection extends AbstractGUISection {
                 this.sortMail(3);
         });
 
-        this.addElement(this.messagesPanel = new OxygenScrollablePanel(this.screen, 6, 24, 75, 10, 1, 100, 12, EnumBaseGUISetting.TEXT_PANEL_SCALE.get().asFloat(), true));
+        this.addElement(this.messagesPanel = new OxygenScrollablePanel(this.screen, 6, 24, 75, 10, 1, 120, 12, EnumBaseGUISetting.TEXT_PANEL_SCALE.get().asFloat(), true));
 
-        this.messagesPanel.<MessagePanelEntry>setClickListener((previous, clicked, mouseX, mouseY, mouseButton)->{
-            if (this.currentMessageButton != clicked) {       
-                if (this.currentMessageButton != null)
-                    this.currentMessageButton.setToggled(false);
+        this.messagesPanel.<MessagePanelEntry>setElementClickListener((previous, clicked, mouseX, mouseY, mouseButton)->{
+            if (this.currentMessageEntry != clicked) {       
+                if (this.currentMessageEntry != null)
+                    this.currentMessageEntry.setToggled(false);
                 clicked.toggle();    
-                this.currentMessageButton = clicked;
+                this.currentMessageEntry = clicked;
                 this.resetMessageContent();
-                this.loadMessageContent(clicked.index);
-                if (!MailManagerClient.instance().getMailboxContainer().isMarkedAsRead(clicked.index)) {
-                    MailManagerClient.instance().getMailboxContainer().markAsRead(clicked.index);
+                this.loadMessageContent(clicked.getWrapped());
+                if (!MailManagerClient.instance().getMailboxContainer().isMarkedAsRead(clicked.getWrapped().getId())) {
+                    MailManagerClient.instance().getMailboxContainer().markAsRead(clicked.getWrapped().getId());
                     MailManagerClient.instance().getMailboxContainer().setChanged(true);
                     clicked.read();
                 }
@@ -145,10 +149,6 @@ public class IncomingMailSection extends AbstractGUISection {
         this.balanceValue.setValue(OxygenMain.COMMON_CURRENCY_INDEX, WatcherHelperClient.getLong(OxygenMain.COMMON_CURRENCY_INDEX));
 
         this.initMessageElements();
-
-        this.takeAttachmentCallback = new TakeAttachmentCallback(this.screen, this, 140, 38).enableDefaultBackground();
-        this.returnAttachmentCallback = new ReturnAttachmentCallback(this.screen, this, 140, 38).enableDefaultBackground();
-        this.removeMessageCallback = new RemoveMessageCallback(this.screen, this, 140, 38).enableDefaultBackground();
     }
 
     private void initMessageElements() {
@@ -157,16 +157,19 @@ public class IncomingMailSection extends AbstractGUISection {
         this.addElement(this.expireTimeTextLabel = new OxygenTextLabel(88, 39, "", EnumBaseGUISetting.TEXT_SUB_SCALE.get().asFloat() - 0.05F, EnumBaseGUISetting.TEXT_DARK_ENABLED_COLOR.get().asInt()).disableFull()); 
 
         this.addElement(this.messageSubjectTextLabel = new OxygenTextLabel(88, 51, "", EnumBaseGUISetting.TEXT_SCALE.get().asFloat(), EnumBaseGUISetting.TEXT_ENABLED_COLOR.get().asInt()).disableFull());
-        this.addElement(this.messageTextBoxLabel = new GUITextBoxLabel(90, 54, 120, 84).setEnabledTextColor(EnumBaseGUISetting.TEXT_ENABLED_COLOR.get().asInt())
+        this.addElement(this.messageTextBoxLabel = new GUITextBoxLabel(90, 54, 120, 84).setEnabledTextColor(EnumBaseGUISetting.TEXT_DARK_ENABLED_COLOR.get().asInt())
                 .setTextScale(EnumBaseGUISetting.TEXT_SUB_SCALE.get().asFloat()).setLineOffset(2).disableFull());
 
-        this.addElement(this.takeAttachmentButton = new OxygenButton(38, this.getHeight() - 11, 40, 10, ClientReference.localize("oxygen_core.gui.take")).disable());  
-        this.takeAttachmentButton.setKeyPressListener(Keyboard.KEY_E, ()->this.takeAttachment());
-
-        this.addElement(this.removeMessageButton = new OxygenButton(84, this.getHeight() - 11, 40, 10, ClientReference.localize("oxygen_core.gui.remove")).disable());  
-        this.removeMessageButton.setKeyPressListener(Keyboard.KEY_X, ()->this.removeMessage());
+        this.addElement(this.takeAttachmentButton = new OxygenKeyButton(0, this.getY() + this.getHeight() + this.screen.guiTop - 8, ClientReference.localize("oxygen_mail.gui.mail.button.takeAttachment"), Keyboard.KEY_E, this::openTakeAttachmentCallback).disable());  
+        this.addElement(this.removeMessageButton = new OxygenKeyButton(0, this.getY() + this.getHeight() + this.screen.guiTop - 8, ClientReference.localize("oxygen_mail.gui.mail.button.removeMessage"), Keyboard.KEY_X, this::openRemoveMessageCallback).disable());  
 
         this.addElement(this.attachment = new MessageAttachment(88, 139).disableFull()); 
+    }
+
+    private void calculateButtonsHorizontalPosition() {
+        ScaledResolution sr = new ScaledResolution(this.mc);
+        this.takeAttachmentButton.setX((sr.getScaledWidth() - (12 + this.textWidth(this.takeAttachmentButton.getDisplayText(), this.takeAttachmentButton.getTextScale()))) / 2 - this.screen.guiLeft);
+        this.removeMessageButton.setX(sr.getScaledWidth() / 2 + 50 - this.screen.guiLeft);
     }
 
     private void sortMail(int mode) {
@@ -188,7 +191,7 @@ public class IncomingMailSection extends AbstractGUISection {
             this.messagesPanel.addEntry(new MessagePanelEntry(msg));
 
         int maxAmount = PrivilegesProviderClient.getAsInt(EnumMailPrivilege.MAILBOX_SIZE.id(), MailConfig.MAILBOX_SIZE.asInt());
-        this.messagesAmountLabel.setDisplayText(String.valueOf(mail.size()) + "/" + String.valueOf(maxAmount));     
+        this.messagesAmountLabel.setDisplayText(String.format("%d/%d", mail.size(), maxAmount));     
         this.messagesAmountLabel.setX(84 - this.textWidth(this.messagesAmountLabel.getDisplayText(), this.messagesAmountLabel.getTextScale()));
 
         this.messagesPanel.getScroller().reset();
@@ -199,38 +202,13 @@ public class IncomingMailSection extends AbstractGUISection {
         return ClientReference.localize(value);
     }
 
-    private void takeAttachment() {
-        if (this.getCurrentMessage().isPending()) {
-            boolean valid = false;
-            EnumMail type = this.getCurrentMessage().getType();
-            if (type == EnumMail.PACKAGE 
-                    || type == EnumMail.SYSTEM_PACKAGE 
-                    || type == EnumMail.PACKAGE_WITH_COD) {
-                if (type == EnumMail.PACKAGE_WITH_COD 
-                        && this.getBalanceValue().getValue() < this.getCurrentMessage().getCurrency())
-                    valid = false;
-                ItemStack itemStack = this.getCurrentMessage().getParcel().stackWrapper.getCachedItemStack();
-                if (InventoryHelper.haveEnoughSpace(ClientReference.getClientPlayer(), this.getCurrentMessage().getParcel().amount, itemStack.getMaxStackSize()))
-                    valid = true;
-            } else
-                valid = true;
-            if (valid)
-                this.openTakeAttachmentCallback();
-        }
-    }
-
-    private void removeMessage() {
-        if (!this.getCurrentMessage().isPending()) 
-            this.removeMessageCallback.open();
-    }
-
     @Override
     public void handleElementClick(AbstractGUISection section, GUIBaseElement element, int mouseButton) {
         if (mouseButton == 0) {
             if (element == this.takeAttachmentButton)
-                this.takeAttachment();
+                this.openTakeAttachmentCallback();
             else if (element == this.removeMessageButton)
-                this.removeMessage();
+                this.openRemoveMessageCallback();
         }
     }
 
@@ -246,42 +224,38 @@ public class IncomingMailSection extends AbstractGUISection {
         return super.keyTyped(typedChar, keyCode); 
     }
 
-    private void loadMessageContent(long messageId) {
-        this.currentMessage = MailManagerClient.instance().getMailboxContainer().getMessage(messageId);
-
+    private void loadMessageContent(Mail mail) {
         this.senderTextLabel.setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.msg.sender", 
-                this.currentMessage.getSenderUsername().equals("mail.sender.sys") ? TextFormatting.YELLOW + localize(this.currentMessage.getSenderUsername()) : localize(this.currentMessage.getSenderUsername())));
+                mail.isSystemMessage() ? TextFormatting.YELLOW + localize(mail.getSenderName()) : localize(mail.getSenderName())));
         this.senderTextLabel.enableFull(); 
 
-        this.receiveTimeTextLabel.setDisplayText(TimeHelperClient.getDateTimeFormatter().format(TimeHelperClient.getZonedDateTime(this.currentMessage.getId())));
-        this.receiveTimeTextLabel.initTooltip(ClientReference.localize("oxygen_mail.gui.mail.msg.received", OxygenUtils.getTimePassedLocalizedString(this.currentMessage.getId())));
+        this.receiveTimeTextLabel.setDisplayText(TimeHelperClient.getDateTimeFormatter().format(TimeHelperClient.getZonedDateTime(mail.getId())));
+        this.receiveTimeTextLabel.initTooltip(ClientReference.localize("oxygen_mail.gui.mail.msg.received", OxygenUtils.getTimePassedLocalizedString(mail.getId())));
         this.receiveTimeTextLabel.enableFull(); 
 
-        this.expireTimeTextLabel.setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.msg.expires", getExpirationTimeLocalizedString(this.currentMessage.getType(), this.currentMessage.getId())));
+        this.expireTimeTextLabel.setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.msg.expires", getExpirationTimeLocalizedString(mail)));
         this.expireTimeTextLabel.enableFull();   
 
-        this.messageSubjectTextLabel.setDisplayText(ClientReference.localize(this.currentMessage.getSubject()));
+        this.messageSubjectTextLabel.setDisplayText(ClientReference.localize(mail.getSubject()));
         this.messageSubjectTextLabel.enableFull();
-        this.messageTextBoxLabel.setDisplayText(ClientReference.localize(this.currentMessage.getMessage()));
+        this.messageTextBoxLabel.setDisplayText(ClientReference.localize(mail.getMessage(), (Object[]) mail.getMessageArguments()));
         this.messageTextBoxLabel.enableFull();
 
-        if (this.currentMessage.isPending()) {
-            this.attachment.load(this.currentMessage);
+        if (mail.isPending()) {
+            this.attachment.load(mail.getType(), mail.getAttachment());
             this.attachment.enableFull();
-            if (!this.currentMessage.isPending())
+            if (!mail.isPending())
                 this.attachment.disableFull();
 
             this.takeAttachmentButton.enable();
-            if (this.currentMessage.getType() == EnumMail.PACKAGE_WITH_COD) {
-                this.takeAttachmentButton.setDisplayText(String.format("[%s] %s", ClientReference.getGameSettings().getKeyDisplayString(Keyboard.KEY_E), 
-                        ClientReference.localize("oxygen_core.gui.pay")));
-                if (this.balanceValue.getValue() < this.currentMessage.getCurrency()) {
+            if (mail.getType() == EnumMail.COD) {
+                this.takeAttachmentButton.setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.button.payForAttachment"));
+                if (this.balanceValue.getValue() < mail.getAttachment().getCurrencyValue()) {
                     this.attachment.disable();
                     this.takeAttachmentButton.disable();
                 }
             } else
-                this.takeAttachmentButton.setDisplayText(String.format("[%s] %s", ClientReference.getGameSettings().getKeyDisplayString(Keyboard.KEY_E), 
-                        ClientReference.localize("oxygen_core.gui.take")));
+                this.takeAttachmentButton.setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.button.takeAttachment"));
             if (this.inventoryLoad.isOverloaded())
                 this.takeAttachmentButton.disable();
         } else
@@ -302,42 +276,25 @@ public class IncomingMailSection extends AbstractGUISection {
         this.removeMessageButton.disable();
     }
 
-    public MessagePanelEntry getCurrentMessageButton() {
-        return this.currentMessageButton;
-    }
-
-    public Mail getCurrentMessage() {
-        return this.currentMessage;
-    }
-
-    private static String getExpirationTimeLocalizedString(EnumMail type, long millis) {
+    private static String getExpirationTimeLocalizedString(Mail mail) {
         int expiresInHours = - 1;
-        switch (type) {
-        case SYSTEM_LETTER:
-            expiresInHours = MailConfig.SYSTEM_LETTER_EXPIRE_TIME_HOURS.asInt();
-            break;
+        switch (mail.getType()) {
         case LETTER:
-            expiresInHours = MailConfig.LETTER_EXPIRE_TIME_HOURS.asInt();
-            break;
-        case SYSTEM_REMITTANCE:
-            expiresInHours = MailConfig.SYSTEM_REMITTANCE_EXPIRE_TIME_HOURS.asInt();
+            expiresInHours = mail.isSystemMessage() ? MailConfig.SYSTEM_LETTER_EXPIRE_TIME_HOURS.asInt() : MailConfig.LETTER_EXPIRE_TIME_HOURS.asInt();
             break;
         case REMITTANCE:
-            expiresInHours = MailConfig.REMITTANCE_EXPIRE_TIME_HOURS.asInt();
+            expiresInHours = mail.isSystemMessage() ? MailConfig.SYSTEM_REMITTANCE_EXPIRE_TIME_HOURS.asInt() : MailConfig.REMITTANCE_EXPIRE_TIME_HOURS.asInt();
             break;
-        case SYSTEM_PACKAGE:
-            expiresInHours = MailConfig.SYSTEM_PACKAGE_EXPIRE_TIME_HOURS.asInt();
+        case PARCEL:
+            expiresInHours = mail.isSystemMessage() ? MailConfig.SYSTEM_PARCEL_EXPIRE_TIME_HOURS.asInt() : MailConfig.PARCEL_EXPIRE_TIME_HOURS.asInt();
             break;
-        case PACKAGE:
-            expiresInHours = MailConfig.PACKAGE_EXPIRE_TIME_HOURS.asInt();
-            break;
-        case PACKAGE_WITH_COD:
-            expiresInHours = MailConfig.PACKAGE_WITH_COD_EXPIRE_TIME_HOURS.asInt();
+        case COD:
+            expiresInHours = MailConfig.COD_EXPIRE_TIME_HOURS.asInt();
             break;  
         }
         if (expiresInHours < 0)
             return ClientReference.localize("oxygen_mail.gui.neverExpires");
-        return OxygenUtils.getExpirationTimeLocalizedString(TimeUnit.HOURS.toMillis(expiresInHours), millis);
+        return OxygenUtils.getExpirationTimeLocalizedString(TimeUnit.HOURS.toMillis(expiresInHours), mail.getId());
     }
 
     public void sharedDataSynchronized() {}
@@ -345,29 +302,30 @@ public class IncomingMailSection extends AbstractGUISection {
     public void mailSynchronized() {
         this.sortMail(0);
         this.initLatestMessageOnMenuOpen();
+
+        this.calculateButtonsHorizontalPosition();
     }
 
     private void initLatestMessageOnMenuOpen() {
         if (!this.messagesPanel.visibleButtons.isEmpty()) {
             GUIButton button = this.messagesPanel.visibleButtons.get(0).toggle();
             this.messagesPanel.setPreviousClickedButton(button);
-            this.currentMessageButton = (MessagePanelEntry) button;
-            this.loadMessageContent(this.currentMessageButton.index);
+            this.currentMessageEntry = (MessagePanelEntry) button;
+            this.loadMessageContent(this.currentMessageEntry.getWrapped());
 
-            if (!MailManagerClient.instance().getMailboxContainer().isMarkedAsRead(this.currentMessageButton.index)) {
-                MailManagerClient.instance().getMailboxContainer().markAsRead(this.currentMessageButton.index);
+            if (!MailManagerClient.instance().getMailboxContainer().isMarkedAsRead(this.currentMessageEntry.getWrapped().getId())) {
+                MailManagerClient.instance().getMailboxContainer().markAsRead(this.currentMessageEntry.getWrapped().getId());
                 MailManagerClient.instance().getMailboxContainer().setChanged(true);
-                this.currentMessageButton.read();
+                this.currentMessageEntry.read();
             }
         }
     }
 
-    public void messageSent(Parcel parcel, long balance) {
+    public void mailSent(EnumMail type, Attachment attachment, long balance) {
         this.balanceValue.updateValue(balance);
-        if (parcel != null) {
-            InventoryHelper.removeEqualStack(this.mc.player, parcel.stackWrapper.getItemStack(), parcel.amount);
+        if (type == EnumMail.PARCEL || type == EnumMail.COD) {
             this.inventoryLoad.updateLoad();
-            this.screen.updateInventoryContent();
+            this.screen.removeItemStack(attachment.getStackWrapper(), attachment.getItemAmount());
         }
     }
 
@@ -378,22 +336,16 @@ public class IncomingMailSection extends AbstractGUISection {
         this.initLatestMessageOnMenuOpen();
     }
 
-    public void attachmentReceived(long oldMessageId, Parcel parcel, long balance) {
+    public void attachmentReceived(long oldMessageId, Mail mail, long balance) {
         this.balanceValue.updateValue(balance);
-        if (parcel != null) {
-            InventoryHelper.addItemStack(this.mc.player, parcel.stackWrapper.getItemStack(), parcel.amount);
+
+        if (mail.getType() == EnumMail.PARCEL || mail.getType() == EnumMail.COD) {
             this.inventoryLoad.updateLoad();
-            this.screen.updateInventoryContent();
+            this.screen.addItemStack(mail.getAttachment().getStackWrapper(), mail.getAttachment().getItemAmount());
         }
 
-        if (this.currentMessage != null && this.currentMessage.getId() == oldMessageId) {
-            this.currentMessageButton.setPending(false);
-            this.currentMessage.setPending(false);
-            this.attachment.disableFull();
-        }
-
-        this.takeAttachmentButton.disable();
-        this.removeMessageButton.enable();
+        this.sortMail(0);
+        this.initLatestMessageOnMenuOpen();
     }
 
     public OxygenInventoryLoad getInventoryLoad() {
@@ -402,6 +354,19 @@ public class IncomingMailSection extends AbstractGUISection {
 
     public OxygenCurrencyValue getBalanceValue() {
         return this.balanceValue;
+    }
+
+    @Nullable
+    public MessagePanelEntry getCurrentMessageEntry() {
+        return this.currentMessageEntry;
+    }
+
+    public OxygenKeyButton getTakeAttachmentButton() {
+        return this.takeAttachmentButton;
+    }
+
+    public OxygenKeyButton getRemoveMessageButton() {
+        return this.removeMessageButton;
     }
 
     public void openTakeAttachmentCallback() {

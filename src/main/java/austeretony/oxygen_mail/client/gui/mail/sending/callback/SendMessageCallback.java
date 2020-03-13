@@ -8,9 +8,9 @@ import austeretony.alternateui.screen.core.GUIBaseElement;
 import austeretony.oxygen_core.client.api.ClientReference;
 import austeretony.oxygen_core.client.api.EnumBaseGUISetting;
 import austeretony.oxygen_core.client.api.PrivilegesProviderClient;
-import austeretony.oxygen_core.client.gui.elements.OxygenButton;
 import austeretony.oxygen_core.client.gui.elements.OxygenCallbackBackgroundFiller;
 import austeretony.oxygen_core.client.gui.elements.OxygenCurrencyValue;
+import austeretony.oxygen_core.client.gui.elements.OxygenKeyButton;
 import austeretony.oxygen_core.client.gui.elements.OxygenTextLabel;
 import austeretony.oxygen_core.common.main.OxygenMain;
 import austeretony.oxygen_core.common.util.MathUtils;
@@ -18,10 +18,10 @@ import austeretony.oxygen_mail.client.MailManagerClient;
 import austeretony.oxygen_mail.client.gui.mail.MailMenuScreen;
 import austeretony.oxygen_mail.client.gui.mail.MessageAttachment;
 import austeretony.oxygen_mail.client.gui.mail.SendingSection;
-import austeretony.oxygen_mail.common.EnumMail;
-import austeretony.oxygen_mail.common.Mail;
-import austeretony.oxygen_mail.common.Parcel;
 import austeretony.oxygen_mail.common.config.MailConfig;
+import austeretony.oxygen_mail.common.mail.Attachment;
+import austeretony.oxygen_mail.common.mail.Attachments;
+import austeretony.oxygen_mail.common.mail.EnumMail;
 import austeretony.oxygen_mail.common.main.EnumMailPrivilege;
 
 public class SendMessageCallback extends AbstractGUICallback {
@@ -30,11 +30,11 @@ public class SendMessageCallback extends AbstractGUICallback {
 
     private final SendingSection section;
 
-    private OxygenButton confirmButton, cancelButton;
+    private OxygenKeyButton confirmButton, cancelButton;
 
     private OxygenTextLabel messageTypeTextLabel, attachmentNoticeTextLabel, addresseeTextLabel, postageTextLabel;
 
-    private MessageAttachment attachment;
+    private MessageAttachment attachmentWidget;
 
     private OxygenCurrencyValue postageValue;
 
@@ -44,9 +44,7 @@ public class SendMessageCallback extends AbstractGUICallback {
 
     private String subject, message;
 
-    private long currency;
-
-    private Parcel parcel;
+    private Attachment attachment;
 
     public SendMessageCallback(MailMenuScreen screen, SendingSection section, int width, int height) {
         super(screen, section, width, height);
@@ -63,32 +61,52 @@ public class SendMessageCallback extends AbstractGUICallback {
         this.addElement(this.messageTypeTextLabel = new OxygenTextLabel(6, 23, "", EnumBaseGUISetting.TEXT_SCALE.get().asFloat(), EnumBaseGUISetting.TEXT_ENABLED_COLOR.get().asInt()));
         this.addElement(this.addresseeTextLabel = new OxygenTextLabel(6, 32, "", EnumBaseGUISetting.TEXT_SUB_SCALE.get().asFloat(), EnumBaseGUISetting.TEXT_DARK_ENABLED_COLOR.get().asInt()));
         this.addElement(this.attachmentNoticeTextLabel = new OxygenTextLabel(6, 41, ClientReference.localize("oxygen_mail.gui.mail.noAttachment"), EnumBaseGUISetting.TEXT_SUB_SCALE.get().asFloat(), EnumBaseGUISetting.TEXT_DARK_ENABLED_COLOR.get().asInt()).disableFull());
-        this.addElement(this.attachment = new MessageAttachment(6, 34).disableFull()); 
+        this.addElement(this.attachmentWidget = new MessageAttachment(6, 34).disableFull()); 
 
         this.addElement(this.postageTextLabel = new OxygenTextLabel(6, this.getHeight() - 26, ClientReference.localize("oxygen_mail.gui.mail.postage"), EnumBaseGUISetting.TEXT_SUB_SCALE.get().asFloat(), EnumBaseGUISetting.TEXT_DARK_ENABLED_COLOR.get().asInt()));
         this.addElement(this.postageValue = new OxygenCurrencyValue(6, this.getHeight() - 24)); 
         this.postageValue.setValue(OxygenMain.COMMON_CURRENCY_INDEX, 0L);
 
-        this.addElement(this.confirmButton = new OxygenButton(15, this.getHeight() - 12, 40, 10, ClientReference.localize("oxygen_core.gui.confirm")));
-        this.confirmButton.setKeyPressListener(Keyboard.KEY_R, ()->this.confirm());
-
-        this.addElement(this.cancelButton = new OxygenButton(this.getWidth() - 55, this.getHeight() - 12, 40, 10, ClientReference.localize("oxygen_core.gui.cancel")));
-        this.cancelButton.setKeyPressListener(Keyboard.KEY_X, ()->this.close());
+        this.addElement(this.confirmButton = new OxygenKeyButton(15, this.getHeight() - 10, ClientReference.localize("oxygen_core.gui.confirm"), Keyboard.KEY_R, this::confirm));
+        this.addElement(this.cancelButton = new OxygenKeyButton(this.getWidth() - 55, this.getHeight() - 10, ClientReference.localize("oxygen_core.gui.cancel"), Keyboard.KEY_X, this::close));
     }
 
     @Override
     public void onOpen() {
         this.attachmentNoticeTextLabel.disableFull();
-        this.attachment.disableFull();
+        this.attachmentWidget.disableFull();
         this.confirmButton.enable();
-        Mail message = this.section.createMessage();
-        this.messageTypeTextLabel.setDisplayText(message.getType().localizedName());
-        this.addresseeTextLabel.setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.addressee", this.section.getAddresseeUsername()));
-        if (message.getType() == EnumMail.LETTER)
+
+        this.type = this.section.getMessageType();
+        switch (this.type) {
+        case LETTER:
+            this.attachment = Attachments.dummy();
+            break;
+        case REMITTANCE:
+            this.attachment = Attachments.remittance(
+                    OxygenMain.COMMON_CURRENCY_INDEX, 
+                    this.section.getCurrencyValueField().getTypedNumberAsLong());
+            break;
+        case PARCEL:
+            this.attachment = Attachments.parcel(
+                    this.section.getSelecteItemWrapper(), 
+                    (int) this.section.getItemAmountField().getTypedNumberAsLong());
+            break;
+        case COD:
+            this.attachment = Attachments.cod(
+                    this.section.getSelecteItemWrapper(), 
+                    (int) this.section.getItemAmountField().getTypedNumberAsLong(), 
+                    OxygenMain.COMMON_CURRENCY_INDEX,
+                    (int) this.section.getCurrencyValueField().getTypedNumberAsLong());
+            break;
+        }
+        this.messageTypeTextLabel.setDisplayText(this.type.localizedName());
+        this.addresseeTextLabel.setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.addressee", this.section.getAddresseeUsernameField().getTypedText()));
+        if (type == EnumMail.LETTER)
             this.attachmentNoticeTextLabel.enableFull();
         else {
-            this.attachment.load(message);
-            this.attachment.enableFull();
+            this.attachmentWidget.load(this.type, this.attachment);
+            this.attachmentWidget.enableFull();
         }
         long 
         postage = 0L,
@@ -96,36 +114,38 @@ public class SendMessageCallback extends AbstractGUICallback {
         remittance = 0L,
         value,
         percent;
-        switch (message.getType()) {
+
+        this.subject = this.section.getSubjectField().getTypedText();
+        this.message = this.section.getMessageBox().getTypedText();
+
+        switch (this.type) {
         case LETTER:
-            if (message.getMessage().isEmpty())
+            if (this.message.isEmpty())
                 this.confirmButton.disable();
             value = PrivilegesProviderClient.getAsLong(EnumMailPrivilege.LETTER_POSTAGE_VALUE.id(), MailConfig.LETTER_POSTAGE_VALUE.asLong());
             postage = value;
             break;
         case REMITTANCE:
-            if (message.getCurrency() <= 0)
+            if (this.attachment.getCurrencyValue() <= 0L)
                 this.confirmButton.disable();
             percent = PrivilegesProviderClient.getAsInt(EnumMailPrivilege.REMITTANCE_POSTAGE_PERCENT.id(), MailConfig.REMITTANCE_POSTAGE_PERCENT.asInt());
-            remittance = message.getCurrency();
-            postage = MathUtils.percentValueOf(message.getCurrency(), (int) percent);
+            remittance = this.attachment.getCurrencyValue();
+            postage = MathUtils.percentValueOf(this.attachment.getCurrencyValue(), (int) percent);
             break;
-        case PACKAGE:
-            if (message.getParcel() == null)
+        case PARCEL:
+            if (this.attachment.getStackWrapper() == null)
                 this.confirmButton.disable();
-            if (message.getParcel().amount <= 0)
+            if (this.attachment.getItemAmount() <= 0)
                 this.confirmButton.disable();
-            value = PrivilegesProviderClient.getAsLong(EnumMailPrivilege.PACKAGE_POSTAGE_VALUE.id(), MailConfig.PACKAGE_POSTAGE_VALUE.asLong());
+            value = PrivilegesProviderClient.getAsLong(EnumMailPrivilege.PARCEL_POSTAGE_VALUE.id(), MailConfig.PACKAGE_POSTAGE_VALUE.asLong());
             postage = value;
             break;
-        case PACKAGE_WITH_COD:
-            if (message.getCurrency() <= 0 || message.getParcel() == null)
+        case COD:
+            if (this.attachment.getCurrencyValue() <= 0L || this.attachment.getStackWrapper() == null || this.attachment.getItemAmount() <= 0)
                 this.confirmButton.disable();
-            if (message.getParcel().amount <= 0)
-                this.confirmButton.disable();
-            value = PrivilegesProviderClient.getAsLong(EnumMailPrivilege.PACKAGE_POSTAGE_VALUE.id(), MailConfig.PACKAGE_POSTAGE_VALUE.asLong());
-            percent = PrivilegesProviderClient.getAsInt(EnumMailPrivilege.PACKAGE_WITH_COD_POSTAGE_PERCENT.id(), MailConfig.PACKAGE_WITH_COD_POSTAGE_PERCENT.asInt());
-            codComission = MathUtils.percentValueOf(message.getCurrency(), (int) percent);
+            value = PrivilegesProviderClient.getAsLong(EnumMailPrivilege.PARCEL_POSTAGE_VALUE.id(), MailConfig.PACKAGE_POSTAGE_VALUE.asLong());
+            percent = PrivilegesProviderClient.getAsInt(EnumMailPrivilege.COD_POSTAGE_PERCENT.id(), MailConfig.COD_POSTAGE_PERCENT.asInt());
+            codComission = MathUtils.percentValueOf(this.attachment.getCurrencyValue(), (int) percent);
             postage = value;
             break;
         default:
@@ -137,15 +157,10 @@ public class SendMessageCallback extends AbstractGUICallback {
             this.confirmButton.disable();
         }
         this.postageValue.setX(this.getX() + 8 + this.textWidth(this.postageValue.getDisplayText(), this.postageValue.getTextScale()));
-        this.type = message.getType();
-        this.subject = message.getSubject();
-        this.message = message.getMessage();
-        this.currency = message.getCurrency();
-        this.parcel = message.getParcel();
     }
 
     private void confirm() {
-        MailManagerClient.instance().getMailboxManager().sendMessageSynced(this.type, this.section.getAddresseeUsername(), this.subject, this.message, this.currency, this.parcel);
+        MailManagerClient.instance().getMailboxManager().sendMessageSynced(this.section.getAddresseeUsernameField().getTypedText(), this.type, this.subject, this.message, this.attachment);
         this.close();
     }
 

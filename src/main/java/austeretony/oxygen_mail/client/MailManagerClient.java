@@ -47,7 +47,7 @@ public final class MailManagerClient {
         return this.keyHandler;
     }
 
-    public void init() {
+    public void worldLoaded() {
         OxygenHelperClient.loadPersistentDataAsync(this.mailboxContainer);
     }
 }

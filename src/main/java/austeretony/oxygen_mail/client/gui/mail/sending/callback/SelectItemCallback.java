@@ -10,8 +10,8 @@ import austeretony.alternateui.screen.core.AbstractGUISection;
 import austeretony.alternateui.screen.core.GUIBaseElement;
 import austeretony.oxygen_core.client.api.ClientReference;
 import austeretony.oxygen_core.client.api.EnumBaseGUISetting;
-import austeretony.oxygen_core.client.gui.elements.OxygenButton;
 import austeretony.oxygen_core.client.gui.elements.OxygenCallbackBackgroundFiller;
+import austeretony.oxygen_core.client.gui.elements.OxygenKeyButton;
 import austeretony.oxygen_core.client.gui.elements.OxygenScrollablePanel;
 import austeretony.oxygen_core.client.gui.elements.OxygenTextLabel;
 import austeretony.oxygen_core.common.item.ItemStackWrapper;
@@ -28,7 +28,7 @@ public class SelectItemCallback extends AbstractGUICallback {
 
     private OxygenScrollablePanel inventoryContentPanel;
 
-    private OxygenButton closeButton;
+    private OxygenKeyButton closeButton;
 
     public SelectItemCallback(MailMenuScreen screen, SendingSection section, int width, int height) {
         super(screen, section, width, height);
@@ -45,10 +45,9 @@ public class SelectItemCallback extends AbstractGUICallback {
         this.addElement(this.inventoryContentPanel = new OxygenScrollablePanel(this.screen, 6, 15, 128, 16, 1, 36, 4, EnumBaseGUISetting.TEXT_PANEL_SCALE.get().asFloat(), false));
         this.loadInventoryContent();
 
-        this.inventoryContentPanel.<InventoryItemPanelEntry>setClickListener((previous, clicked, mouseX, mouseY, mouseButton)->this.section.itemSelected(clicked));
+        this.inventoryContentPanel.<InventoryItemPanelEntry>setElementClickListener((previous, clicked, mouseX, mouseY, mouseButton)->this.section.itemSelected(clicked));
 
-        this.addElement(this.closeButton = new OxygenButton(this.getWidth() - 55, this.getHeight() - 12, 40, 10, ClientReference.localize("oxygen_core.gui.close")));
-        this.closeButton.setKeyPressListener(Keyboard.KEY_X, ()->this.close());
+        this.addElement(this.closeButton = new OxygenKeyButton(this.getWidth() - 55, this.getHeight() - 10, ClientReference.localize("oxygen_core.gui.close"), Keyboard.KEY_X, this::close));
     }
 
     public void loadInventoryContent() {
@@ -56,8 +55,8 @@ public class SelectItemCallback extends AbstractGUICallback {
             this.inventoryContentPanel.reset();
             Set<String> added = new HashSet<>();
             String key;
-            for (ItemStackWrapper stackWrapper : this.screen.inventoryContent.keySet()) {
-                key = getKey(stackWrapper);
+            for (ItemStackWrapper stackWrapper : this.screen.getInventoryContent().keySet()) {
+                key = stackWrapper.toString();
                 if (!added.contains(key)) {
                     this.inventoryContentPanel.addEntry(new InventoryItemPanelEntry(stackWrapper, this.screen.getEqualStackAmount(stackWrapper)));
                     added.add(key);
@@ -65,12 +64,8 @@ public class SelectItemCallback extends AbstractGUICallback {
             }
 
             this.inventoryContentPanel.getScroller().reset();
-            this.inventoryContentPanel.getScroller().updateRowsAmount(MathUtils.clamp(this.screen.inventoryContent.size(), 4, ClientReference.getClientPlayer().inventory.mainInventory.size()));
+            this.inventoryContentPanel.getScroller().updateRowsAmount(MathUtils.clamp(this.screen.getInventoryContent().size(), 4, ClientReference.getClientPlayer().inventory.mainInventory.size()));
         }
-    }
-
-    private static String getKey(ItemStackWrapper stackWrapper) {
-        return String.valueOf(stackWrapper.itemId) + "_" + String.valueOf(stackWrapper.damage) + "_" + stackWrapper.stackNBTStr + "_" + stackWrapper.capNBTStr;
     }
 
     @Override

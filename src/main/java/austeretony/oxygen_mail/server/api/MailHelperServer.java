@@ -2,20 +2,38 @@ package austeretony.oxygen_mail.server.api;
 
 import java.util.UUID;
 
-import austeretony.oxygen_mail.common.Parcel;
+import javax.annotation.Nonnull;
+
+import austeretony.oxygen_mail.common.mail.Attachment;
+import austeretony.oxygen_mail.common.mail.EnumMail;
 import austeretony.oxygen_mail.server.MailManagerServer;
+import austeretony.oxygen_mail.server.Mailbox;
 
 public class MailHelperServer {
 
-    public static boolean sendSystemLetter(UUID addresseeUUID, String senderName, String subject, String message, boolean ignoreMailBoxCapacity) {
-        return MailManagerServer.instance().getMailboxesManager().sendSystemLetter(addresseeUUID, senderName, subject, message, ignoreMailBoxCapacity);
+    @Nonnull
+    public static Mailbox getPlayerMailbox(UUID playerUUID) {
+        return MailManagerServer.instance().getMailboxesContainer().getPlayerMailbox(playerUUID);
     }
 
-    public static boolean sendSystemRemittance(UUID addresseeUUID, String senderName, String subject, String message, long remittanceValue, boolean ignoreMailBoxCapacity) {
-        return MailManagerServer.instance().getMailboxesManager().sendSystemRemittance(addresseeUUID, senderName, subject, message, remittanceValue, ignoreMailBoxCapacity);
+    public static boolean canPlayerAcceptMessages(UUID playerUUID) {
+        return getPlayerMailbox(playerUUID).canAcceptMessages();
     }
 
-    public static boolean sendSystemPackage(UUID addresseeUUID, String senderName, String subject, String message, Parcel parcel, boolean ignoreMailBoxCapacity) {
-        return MailManagerServer.instance().getMailboxesManager().sendSystemPackage(addresseeUUID, senderName, subject, message, parcel, ignoreMailBoxCapacity);
+    public static int getPlayerMailboxCapacity(UUID playerUUID) {
+        return getPlayerMailbox(playerUUID).getMaxCapacity();
+    }
+
+    public static int getPlayerMessagesAmount(UUID playerUUID) {
+        return getPlayerMailbox(playerUUID).getMessagesAmount();
+    }
+
+    public static int getPlayerMailboxFreeSpace(UUID playerUUID) {
+        Mailbox mailbox = getPlayerMailbox(playerUUID);
+        return mailbox.getMaxCapacity() - mailbox.getMessagesAmount();
+    }
+
+    public static boolean sendSystemMail(UUID addresseeUUID, String senderName, EnumMail type, String subject, Attachment attachment, boolean ignoreMailBoxCapacity, String message, String... messageArgs) {
+        return MailManagerServer.instance().getMailboxesManager().sendSystemMail(addresseeUUID, senderName, type, subject, attachment, ignoreMailBoxCapacity, message, messageArgs);
     }
 }

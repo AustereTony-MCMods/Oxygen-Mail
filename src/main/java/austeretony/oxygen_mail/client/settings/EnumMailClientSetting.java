@@ -30,7 +30,7 @@ public enum EnumMailClientSetting {
     }
 
     public static void register() {
-        for (EnumMailClientSetting setting : EnumMailClientSetting.values())
+        for (EnumMailClientSetting setting : values())
             OxygenManagerClient.instance().getClientSettingManager().register(SettingValueUtils.getValue(setting.type, setting.key, setting.baseValue));
     }
 }

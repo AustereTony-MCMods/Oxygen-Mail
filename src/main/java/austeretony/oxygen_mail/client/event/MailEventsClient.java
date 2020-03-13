@@ -8,6 +8,6 @@ public class MailEventsClient {
 
     @SubscribeEvent
     public void onClientInit(OxygenClientInitEvent event) {
-        MailManagerClient.instance().init();
+        MailManagerClient.instance().worldLoaded();
     }
 }

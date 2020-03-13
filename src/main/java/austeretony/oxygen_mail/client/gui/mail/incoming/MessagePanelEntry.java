@@ -4,23 +4,23 @@ import austeretony.alternateui.util.EnumGUIAlignment;
 import austeretony.oxygen_core.client.api.ClientReference;
 import austeretony.oxygen_core.client.api.EnumBaseGUISetting;
 import austeretony.oxygen_core.client.gui.OxygenGUIUtils;
-import austeretony.oxygen_core.client.gui.elements.OxygenIndexedPanelEntry;
+import austeretony.oxygen_core.client.gui.elements.OxygenWrapperPanelEntry;
 import austeretony.oxygen_mail.client.MailManagerClient;
-import austeretony.oxygen_mail.common.Mail;
+import austeretony.oxygen_mail.common.mail.Mail;
 import net.minecraft.client.renderer.GlStateManager;
 
-public class MessagePanelEntry extends OxygenIndexedPanelEntry<Long> {
+public class MessagePanelEntry extends OxygenWrapperPanelEntry<Mail> {
 
     private boolean pending;
 
-    public MessagePanelEntry(Mail message) {
-        super(message.getId());
-        this.pending = message.isPending();
+    public MessagePanelEntry(Mail mail) {
+        super(mail);
+        this.pending = mail.isPending();
         this.setStaticBackgroundColor(EnumBaseGUISetting.STATUS_TEXT_COLOR.get().asInt());
         this.setDynamicBackgroundColor(EnumBaseGUISetting.ELEMENT_ENABLED_COLOR.get().asInt(), EnumBaseGUISetting.ELEMENT_DISABLED_COLOR.get().asInt(), EnumBaseGUISetting.ELEMENT_HOVERED_COLOR.get().asInt());
         this.setTextDynamicColor(EnumBaseGUISetting.TEXT_ENABLED_COLOR.get().asInt(), EnumBaseGUISetting.TEXT_DISABLED_COLOR.get().asInt(), EnumBaseGUISetting.TEXT_HOVERED_COLOR.get().asInt());
-        this.setDisplayText(ClientReference.localize(message.getSubject()));
-        if (MailManagerClient.instance().getMailboxContainer().isMarkedAsRead(message.getId()))
+        this.setDisplayText(ClientReference.localize(mail.getSubject()));
+        if (MailManagerClient.instance().getMailboxContainer().isMarkedAsRead(mail.getId()))
             this.read();
     }
 

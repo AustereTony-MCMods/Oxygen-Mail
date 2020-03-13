@@ -8,7 +8,8 @@ import austeretony.oxygen_core.client.api.EnumBaseGUISetting;
 import austeretony.oxygen_core.client.api.OxygenHelperClient;
 import austeretony.oxygen_core.client.currency.CurrencyProperties;
 import austeretony.oxygen_core.common.util.OxygenUtils;
-import austeretony.oxygen_mail.common.Mail;
+import austeretony.oxygen_mail.common.mail.Attachment;
+import austeretony.oxygen_mail.common.mail.EnumMail;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
@@ -24,7 +25,7 @@ public class MessageAttachment extends GUISimpleElement<MessageAttachment> {
 
     private String amountStr, valueStr, costLabelStr;
 
-    private final CurrencyProperties currencyProperties;
+    private CurrencyProperties currencyProperties;
 
     private final boolean enableDurabilityBar;
 
@@ -33,8 +34,6 @@ public class MessageAttachment extends GUISimpleElement<MessageAttachment> {
         this.setSize(16, 16);       
 
         this.costLabelStr = ClientReference.localize("oxygen_mail.gui.mail.attachment.cost");
-
-        this.currencyProperties = OxygenHelperClient.getCommonCurrencyProperties();
 
         this.enableDurabilityBar = EnumBaseClientSetting.ENABLE_ITEMS_DURABILITY_BAR.get().asBoolean();
         this.setTextScale(EnumBaseGUISetting.TEXT_SUB_SCALE.get().asFloat() - 0.05F);
@@ -114,29 +113,29 @@ public class MessageAttachment extends GUISimpleElement<MessageAttachment> {
         }
     }
 
-    public void load(Mail message) {
+    public void load(EnumMail type, Attachment attachment) {
         this.mode = - 1; 
         this.itemStack = null;
-        switch (message.getType()) {
-        case SYSTEM_REMITTANCE:
+        
+        this.currencyProperties = OxygenHelperClient.getCurrencyProperties(attachment.getCurrencyIndex());
+        switch (type) {
         case REMITTANCE:
-            this.value = message.getCurrency();
-            this.valueStr = OxygenUtils.formatCurrencyValue(String.valueOf(message.getCurrency()));
+            this.value = attachment.getCurrencyValue();
+            this.valueStr = OxygenUtils.formatCurrencyValue(String.valueOf(this.value));
             this.mode = 0; 
             break;
-        case SYSTEM_PACKAGE:
-        case PACKAGE:
-            this.itemStack = message.getParcel().stackWrapper.getCachedItemStack();
-            this.amount = message.getParcel().amount;
-            this.amountStr = String.valueOf(message.getParcel().amount);
+        case PARCEL:
+            this.itemStack = attachment.getStackWrapper().getCachedItemStack();
+            this.amount = attachment.getItemAmount();
+            this.amountStr = String.valueOf(this.amount);
             this.mode = 1; 
             break;
-        case PACKAGE_WITH_COD:
-            this.itemStack = message.getParcel().stackWrapper.getCachedItemStack();
-            this.amount = message.getParcel().amount;
-            this.amountStr = String.valueOf(message.getParcel().amount);
-            this.value = message.getCurrency();
-            this.valueStr = OxygenUtils.formatCurrencyValue(String.valueOf(message.getCurrency()));
+        case COD:
+            this.itemStack = attachment.getStackWrapper().getCachedItemStack();
+            this.amount = attachment.getItemAmount();
+            this.amountStr = String.valueOf(this.amount);
+            this.value = attachment.getCurrencyValue();
+            this.valueStr = OxygenUtils.formatCurrencyValue(String.valueOf(this.value));
             this.mode = 2; 
             break;
         default:

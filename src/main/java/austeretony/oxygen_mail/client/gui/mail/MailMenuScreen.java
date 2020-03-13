@@ -1,6 +1,5 @@
 package austeretony.oxygen_mail.client.gui.mail;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import austeretony.alternateui.screen.core.AbstractGUIScreen;
@@ -8,38 +7,39 @@ import austeretony.alternateui.screen.core.AbstractGUISection;
 import austeretony.alternateui.screen.core.GUIBaseElement;
 import austeretony.alternateui.screen.core.GUIWorkspace;
 import austeretony.alternateui.util.EnumGUIAlignment;
-import austeretony.oxygen_core.client.OxygenManagerClient;
 import austeretony.oxygen_core.client.api.ClientReference;
+import austeretony.oxygen_core.client.api.InventoryProviderClient;
 import austeretony.oxygen_core.client.api.OxygenHelperClient;
 import austeretony.oxygen_core.client.api.PrivilegesProviderClient;
 import austeretony.oxygen_core.client.gui.menu.OxygenMenuEntry;
 import austeretony.oxygen_core.common.item.ItemStackWrapper;
 import austeretony.oxygen_mail.client.gui.menu.MailMenuEntry;
 import austeretony.oxygen_mail.client.settings.gui.EnumMailGUISetting;
-import austeretony.oxygen_mail.common.Parcel;
+import austeretony.oxygen_mail.common.config.MailConfig;
+import austeretony.oxygen_mail.common.mail.Attachment;
+import austeretony.oxygen_mail.common.mail.EnumMail;
+import austeretony.oxygen_mail.common.mail.Mail;
 import austeretony.oxygen_mail.common.main.EnumMailPrivilege;
-import austeretony.oxygen_mail.common.main.EnumMailStatusMessage;
 import austeretony.oxygen_mail.common.main.MailMain;
-import net.minecraft.item.ItemStack;
 
 public class MailMenuScreen extends AbstractGUIScreen {
 
     public static final OxygenMenuEntry MAIL_MENU_ENTRY = new MailMenuEntry();
 
+    private final Map<ItemStackWrapper, Integer> inventoryContent;
+
     protected IncomingMailSection incomingSection;
 
     protected SendingSection sendingSection;
-
-    public final Map<ItemStackWrapper, Integer> inventoryContent = new LinkedHashMap<>();
 
     public final boolean allowMailSending;
 
     public MailMenuScreen() {
         OxygenHelperClient.syncSharedData(MailMain.MAIL_MENU_SCREEN_ID);
         OxygenHelperClient.syncData(MailMain.MAIL_DATA_ID);
-        this.updateInventoryContent();
+        this.inventoryContent = InventoryProviderClient.getPlayerInventory().getInventoryContent(ClientReference.getClientPlayer());
 
-        this.allowMailSending = PrivilegesProviderClient.getAsBoolean(EnumMailPrivilege.ALLOW_MAIL_SENDING.id(), true);
+        this.allowMailSending = PrivilegesProviderClient.getAsBoolean(EnumMailPrivilege.ALLOW_MAIL_SENDING.id(), MailConfig.ALLOW_MAIL_SENDING.asBoolean());      
     }
 
     @Override
@@ -81,34 +81,28 @@ public class MailMenuScreen extends AbstractGUIScreen {
         return false;
     }
 
-    public void informPlayer(EnumMailStatusMessage status) {
-        OxygenManagerClient.instance().getChatMessagesManager().showStatusMessage(MailMain.MAIL_MOD_INDEX, status.ordinal());
-    }
-
-    public void updateInventoryContent() {
-        this.inventoryContent.clear();
-        ItemStackWrapper wrapper;
-        int amount;
-        for (ItemStack itemStack : ClientReference.getClientPlayer().inventory.mainInventory) {
-            if (!itemStack.isEmpty()) {
-                wrapper = ItemStackWrapper.getFromStack(itemStack);
-                if (!this.inventoryContent.containsKey(wrapper))
-                    this.inventoryContent.put(wrapper, itemStack.getCount());
-                else {
-                    amount = this.inventoryContent.get(wrapper);
-                    amount += itemStack.getCount();
-                    this.inventoryContent.put(wrapper, amount);
-                }
-            }
-        }
+    public Map<ItemStackWrapper, Integer> getInventoryContent() {
+        return this.inventoryContent;
     }
 
     public int getEqualStackAmount(ItemStackWrapper stackWrapper) {
-        int amount = 0;
-        for (ItemStackWrapper wrapper : this.inventoryContent.keySet())
-            if (wrapper.isEquals(stackWrapper))
-                amount += this.inventoryContent.get(wrapper);
-        return amount;
+        Integer amount = this.inventoryContent.get(stackWrapper);
+        return amount == null ? 0 : amount.intValue();
+    }
+
+    public void addItemStack(ItemStackWrapper stackWrapper, int amount) {
+        Integer stored = this.inventoryContent.get(stackWrapper);
+        this.inventoryContent.put(stackWrapper, stored != null ? stored + amount : amount);
+    }
+
+    public void removeItemStack(ItemStackWrapper stackWrapper, int amount) {
+        Integer stored = this.inventoryContent.get(stackWrapper);
+        if (stored != null) {
+            if (stored > amount)
+                this.inventoryContent.put(stackWrapper, stored - amount);
+            else
+                this.inventoryContent.remove(stackWrapper);
+        }
     }
 
     public void sharedDataSynchronized() {
@@ -121,9 +115,9 @@ public class MailMenuScreen extends AbstractGUIScreen {
         this.sendingSection.mailSynchronized();
     }
 
-    public void messageSent(Parcel parcel, long balance) {
-        this.incomingSection.messageSent(parcel, balance);
-        this.sendingSection.messageSent(parcel, balance);
+    public void mailSent(EnumMail type, Attachment attachment, long balance) {
+        this.incomingSection.mailSent(type, attachment, balance);
+        this.sendingSection.mailSent(type, attachment, balance);
     }
 
     public void messageRemoved(long messageId) {
@@ -131,9 +125,9 @@ public class MailMenuScreen extends AbstractGUIScreen {
         this.sendingSection.messageRemoved(messageId);
     }
 
-    public void attachmentReceived(long oldMessageId, Parcel parcel, long balance) {
-        this.incomingSection.attachmentReceived(oldMessageId, parcel, balance);
-        this.sendingSection.attachmentReceived(oldMessageId, parcel, balance);
+    public void attachmentReceived(long oldMessageId, Mail mail, long balance) {
+        this.incomingSection.attachmentReceived(oldMessageId, mail, balance);
+        this.sendingSection.attachmentReceived(oldMessageId, mail, balance);
     }
 
     public IncomingMailSection getIncomingSection() {

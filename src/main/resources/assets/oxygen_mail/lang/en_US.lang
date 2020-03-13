@@ -14,6 +14,13 @@ oxygen_mail.gui.context.pay=Pay
 oxygen_mail.gui.context.return=Return
 oxygen_mail.gui.context.remove=Remove
 
+oxygen_mail.gui.mail.button.takeAttachment=Take Attachment
+oxygen_mail.gui.mail.button.payForAttachment=Pay for Attachment
+oxygen_mail.gui.mail.button.removeMessage=Remove Message
+
+oxygen_mail.gui.mail.button.sendMessage=Send Message
+oxygen_mail.gui.mail.button.selectItem=Select Item
+
 oxygen_mail.gui.mail.title=Mail
 
 oxygen_mail.gui.mail.selectItemButton=Select
@@ -53,20 +60,15 @@ oxygen_mail.gui.neverExpires=Never
 
 oxygen_mail.command.dataReset=<oxygen: mail> client data reset.
 
-oxygen_mail.mail.service_letter=Service Letter
 oxygen_mail.mail.letter=Letter
-oxygen_mail.mail.service_remittance=Service Remittance
 oxygen_mail.mail.remittance=Remittance
-oxygen_mail.mail.service_package=Service Package
-oxygen_mail.mail.package=Package
-oxygen_mail.mail.package_with_cod=Package with C.O.D.
+oxygen_mail.mail.parcel=Parcel
+oxygen_mail.mail.cod=C.O.D.
 
 mail.sender.sys=System
-mail.subject.return=Return
-mail.message.remittanceReturn=Return of unclaimed remittance.
-mail.message.packageReturn=Return of unclaimed package.
+mail.message.attachmentReturn=Player §f%s§r returned attachment.
 mail.cod.pay.s=C.O.D. Payment
-mail.cod.pay.m=Player paid C.O.D.
+mail.cod.pay.m=Player paid for <§f%s§rx§f%s§r>.
 
 oxygen_mail.sorting.receiveTime=Receive Time
 oxygen_mail.sorting.subject=Subject

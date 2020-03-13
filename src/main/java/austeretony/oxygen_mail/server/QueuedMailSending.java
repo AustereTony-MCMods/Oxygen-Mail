@@ -1,29 +1,25 @@
 package austeretony.oxygen_mail.server;
 
-import java.util.UUID;
-
-import austeretony.oxygen_mail.common.EnumMail;
-import austeretony.oxygen_mail.common.Parcel;
+import austeretony.oxygen_mail.common.mail.Attachment;
+import austeretony.oxygen_mail.common.mail.EnumMail;
+import net.minecraft.entity.player.EntityPlayerMP;
 
 public class QueuedMailSending {
 
-    final UUID playerUUID;
+    final EntityPlayerMP senderMP;
 
     final EnumMail type;
 
-    final String addressee, subject, message;
+    final String addresseeUsername, subject, message;
 
-    final long currency;
+    final Attachment attachment;
 
-    final Parcel parcel;
-
-    protected QueuedMailSending(UUID playerUUID, EnumMail type, String addressee, String subject, String message, long currency, Parcel parcel) {
-        this.playerUUID = playerUUID;
+    protected QueuedMailSending(EntityPlayerMP senderMP, String addresseeUsername, EnumMail type, String subject, String message, Attachment attachment) {
+        this.senderMP = senderMP;
+        this.addresseeUsername = addresseeUsername;
         this.type = type;
-        this.addressee = addressee;
         this.subject = subject;
         this.message = message;
-        this.currency = currency;
-        this.parcel = parcel;
+        this.attachment = attachment;
     }
 }

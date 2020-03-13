@@ -1,0 +1,84 @@
+key.oxygen_mail.mailMenu=Ouvrir le menu des messages
+
+oxygen_mail.gui.settings.module.mail=Message
+
+oxygen_mail.gui.settings.option.addMailMenu=Menu des messages
+oxygen_mail.gui.settings.option.alignmentMailMenu=Menu des messages
+
+oxygen_mail.incoming=Tu as recu un nouveau message.
+oxygen_mail.message.genericTitle=Lettre
+
+oxygen_mail.gui.context.take=Prendre
+oxygen_mail.gui.context.pay=Payer
+oxygen_mail.gui.context.return=Restituer
+oxygen_mail.gui.context.remove=Supprimer
+
+oxygen_mail.gui.mail.title=Message
+
+oxygen_mail.gui.mail.selectItemButton=Selectionner
+oxygen_mail.gui.mail.sendButton=Envoyer
+
+oxygen_mail.gui.mail.incoming=Entrant
+oxygen_mail.gui.mail.sending=Envoyer
+oxygen_mail.gui.mail.attachment=Colis
+oxygen_mail.gui.mail.attachment.cost=Prix:
+oxygen_mail.gui.mail.addressée=Pour: %s
+oxygen_mail.gui.mail.noAttachment=Pas de colis
+
+oxygen_mail.gui.mail.callback.takeAttachment=Prendre le colis
+oxygen_mail.gui.mail.callback.takeAttachment.request=Prendre le colis ?
+oxygen_mail.gui.mail.callback.returnAttachment=Restituer le colis
+oxygen_mail.gui.mail.callback.returnAttachment.request=Restituer a l'expediteur
+oxygen_mail.gui.mail.callback.removeMessage=Supprimer le message
+oxygen_mail.gui.mail.callback.removeMessage.request=Le message sera supprime.
+oxygen_mail.gui.mail.callback.selectItem=Selectionner un objet
+oxygen_mail.gui.mail.callback.sendMessage=Envoi
+
+oxygen_mail.gui.mail.sendTo=A:
+oxygen_mail.gui.mail.subject=Sujet:
+
+oxygen_mail.gui.mail.playerOnline=Joueur en ligne
+oxygen_mail.gui.mail.playerOffline=Joueur deconnecté ou inconnu
+oxygen_mail.gui.mail.postage=Tarif:
+oxygen_mail.gui.mail.remittance=Versement
+oxygen_mail.gui.mail.cod=Paiement a la livraison
+oxygen_mail.gui.mail.package=Colis
+
+oxygen_mail.gui.mail.msg.sender=De: %s
+oxygen_mail.gui.mail.msg.expires=Expire dans: %s
+oxygen_mail.gui.mail.msg.received=Il y a %s
+
+oxygen_mail.gui.neverExpires=Jamais
+
+oxygen_mail.command.dataReset=<oxygen: mail> Data du clien réinitialisé.
+
+oxygen_mail.mail.service_letter=Service Lettre
+oxygen_mail.mail.letter=Lettre
+oxygen_mail.mail.service_remittance=Service Paiement
+oxygen_mail.mail.remittance=Paiement
+oxygen_mail.mail.service_package=Service Colis
+oxygen_mail.mail.package=Colis
+oxygen_mail.mail.package_with_cod=Colis avec paiement a la livraison
+
+mail.sender.sys=Systeme
+mail.subject.return=Restituer
+mail.message.remittanceReturn=Restitution de paiement non reclamée.
+mail.message.packageReturn=Restitution de colis non reclamé.
+mail.cod.pay.s=Paiement de la livraison
+mail.cod.pay.m=Le joueur a payé le paiement a la livraison
+
+oxygen_mail.sorting.receiveTime=Date de réception
+oxygen_mail.sorting.subject=Sujet
+
+oxygen_mail.status.playerNotFound=Jouer non trouvé
+oxygen_mail.status.parcelDamaged=Colis endommagé
+oxygen_mail.status.itemBlackListed=Objet interdit
+oxygen_mail.status.messageSent=Message envoyé
+oxygen_mail.status.messageSendingFailed=Envoi du message echoué
+oxygen_mail.status.attachmentReceived=Colis recu
+oxygen_mail.status.messageReturned=Colis restitué a l'expediteur
+oxygen_mail.status.messageRemoved=Message supprimé
+
+oxygen_mail.message.command.oxygens.mail.letterSent=Letter envoyée a <%s> - Sujet: %s, Message: %s
+oxygen_mail.message.command.oxygens.mail.remittanceSent=Paiement envoyée a <%s> - Sujet: %s, Message: %s, value: %s
+oxygen_mail.message.command.oxygens.mail.packageSent=Colis envoyé a <%s> - Sujet: %s, Message: %s, amount: %s, item: %s
