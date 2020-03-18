@@ -1,5 +1,7 @@
 package austeretony.oxygen_mail.client.gui.mail.sending.callback;
 
+import javax.annotation.Nullable;
+
 import org.lwjgl.input.Keyboard;
 
 import austeretony.alternateui.screen.callback.AbstractGUICallback;
@@ -44,6 +46,7 @@ public class SendMessageCallback extends AbstractGUICallback {
 
     private String subject, message;
 
+    @Nullable
     private Attachment attachment;
 
     public SendMessageCallback(MailMenuScreen screen, SendingSection section, int width, int height) {
@@ -77,6 +80,8 @@ public class SendMessageCallback extends AbstractGUICallback {
         this.attachmentWidget.disableFull();
         this.confirmButton.enable();
 
+        this.attachment = null;
+
         this.type = this.section.getMessageType();
         switch (this.type) {
         case LETTER:
@@ -88,11 +93,21 @@ public class SendMessageCallback extends AbstractGUICallback {
                     this.section.getCurrencyValueField().getTypedNumberAsLong());
             break;
         case PARCEL:
+            if (this.section.getSelecteItemWrapper() == null) {
+                this.confirmButton.disable();
+                return;
+            }
+
             this.attachment = Attachments.parcel(
                     this.section.getSelecteItemWrapper(), 
                     (int) this.section.getItemAmountField().getTypedNumberAsLong());
             break;
         case COD:
+            if (this.section.getSelecteItemWrapper() == null) {
+                this.confirmButton.disable();
+                return;
+            }
+
             this.attachment = Attachments.cod(
                     this.section.getSelecteItemWrapper(), 
                     (int) this.section.getItemAmountField().getTypedNumberAsLong(), 

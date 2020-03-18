@@ -9,6 +9,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import austeretony.oxygen_core.common.main.OxygenMain;
 import austeretony.oxygen_core.common.persistent.AbstractPersistentData;
@@ -31,8 +32,13 @@ public class MailboxesContainerServer extends AbstractPersistentData {
         this.mailboxes.put(playerUUID, new Mailbox(playerUUID));
     }
 
-    @Nonnull
+    @Nullable
     public Mailbox getPlayerMailbox(UUID playerUUID) {
+        return this.mailboxes.get(playerUUID);
+    }
+
+    @Nonnull
+    public Mailbox getPlayerMailboxSafe(UUID playerUUID) {
         Mailbox mailbox = this.mailboxes.get(playerUUID);
         if (mailbox == null) {
             mailbox = new Mailbox(playerUUID);

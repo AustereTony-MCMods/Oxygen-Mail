@@ -37,12 +37,10 @@ oxygen_mail.gui.mail.callback.sendMessage=Envoi
 oxygen_mail.gui.mail.sendTo=A:
 oxygen_mail.gui.mail.subject=Sujet:
 
-oxygen_mail.gui.mail.playerOnline=Joueur en ligne
-oxygen_mail.gui.mail.playerOffline=Joueur deconnecté ou inconnu
 oxygen_mail.gui.mail.postage=Tarif:
 oxygen_mail.gui.mail.remittance=Versement
 oxygen_mail.gui.mail.cod=Paiement a la livraison
-oxygen_mail.gui.mail.package=Colis
+oxygen_mail.gui.mail.parcel=Colis
 
 oxygen_mail.gui.mail.msg.sender=De: %s
 oxygen_mail.gui.mail.msg.expires=Expire dans: %s
@@ -52,33 +50,26 @@ oxygen_mail.gui.neverExpires=Jamais
 
 oxygen_mail.command.dataReset=<oxygen: mail> Data du clien réinitialisé.
 
-oxygen_mail.mail.service_letter=Service Lettre
 oxygen_mail.mail.letter=Lettre
-oxygen_mail.mail.service_remittance=Service Paiement
 oxygen_mail.mail.remittance=Paiement
-oxygen_mail.mail.service_package=Service Colis
-oxygen_mail.mail.package=Colis
-oxygen_mail.mail.package_with_cod=Colis avec paiement a la livraison
+oxygen_mail.mail.parcel=Colis
+oxygen_mail.mail.cod=Colis avec paiement a la livraison
 
 mail.sender.sys=Systeme
 mail.subject.return=Restituer
-mail.message.remittanceReturn=Restitution de paiement non reclamée.
-mail.message.packageReturn=Restitution de colis non reclamé.
-mail.cod.pay.s=Paiement de la livraison
-mail.cod.pay.m=Le joueur a payé le paiement a la livraison
 
 oxygen_mail.sorting.receiveTime=Date de réception
 oxygen_mail.sorting.subject=Sujet
 
-oxygen_mail.status.playerNotFound=Jouer non trouvé
-oxygen_mail.status.parcelDamaged=Colis endommagé
-oxygen_mail.status.itemBlackListed=Objet interdit
-oxygen_mail.status.messageSent=Message envoyé
-oxygen_mail.status.messageSendingFailed=Envoi du message echoué
-oxygen_mail.status.attachmentReceived=Colis recu
-oxygen_mail.status.messageReturned=Colis restitué a l'expediteur
-oxygen_mail.status.messageRemoved=Message supprimé
+oxygen_mail.status.message.playerNotFound=Jouer non trouvé
+oxygen_mail.status.message.parcelDamaged=Colis endommagé
+oxygen_mail.status.message.itemBlackListed=Objet interdit
+oxygen_mail.status.message.messageSent=Message envoyé
+oxygen_mail.status.message.messageSendingFailed=Envoi du message echoué
+oxygen_mail.status.message.attachmentReceived=Colis recu
+oxygen_mail.status.message.messageReturned=Colis restitué a l'expediteur
+oxygen_mail.status.message.messageRemoved=Message supprimé
 
 oxygen_mail.message.command.oxygens.mail.letterSent=Letter envoyée a <%s> - Sujet: %s, Message: %s
-oxygen_mail.message.command.oxygens.mail.remittanceSent=Paiement envoyée a <%s> - Sujet: %s, Message: %s, value: %s
-oxygen_mail.message.command.oxygens.mail.packageSent=Colis envoyé a <%s> - Sujet: %s, Message: %s, amount: %s, item: %s
+oxygen_mail.message.command.oxygens.mail.remittanceSent=Paiement envoyée a <%s> - Sujet: %s, Message: %s, index: %d, value: %d
+oxygen_mail.message.command.oxygens.mail.parcelSent=Colis envoyé a <%s> - Sujet: %s, Message: %s, amount: %d, item: %s

@@ -21,11 +21,11 @@ public class MailDataSyncHandlerServer implements DataSyncHandlerServer<Mail> {
 
     @Override
     public Set<Long> getIds(UUID playerUUID) {
-        return MailManagerServer.instance().getMailboxesContainer().getPlayerMailbox(playerUUID).getMessagesIds();
+        return MailManagerServer.instance().getMailboxesContainer().getPlayerMailboxSafe(playerUUID).getMessagesIds();
     }
 
     @Override
     public Mail getEntry(UUID playerUUID, long entryId) {
-        return MailManagerServer.instance().getMailboxesContainer().getPlayerMailbox(playerUUID).getMessage(entryId);
+        return MailManagerServer.instance().getMailboxesContainer().getPlayerMailboxSafe(playerUUID).getMessage(entryId);
     }
 }

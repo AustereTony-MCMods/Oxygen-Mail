@@ -13,7 +13,7 @@ public class MailHelperServer {
 
     @Nonnull
     public static Mailbox getPlayerMailbox(UUID playerUUID) {
-        return MailManagerServer.instance().getMailboxesContainer().getPlayerMailbox(playerUUID);
+        return MailManagerServer.instance().getMailboxesContainer().getPlayerMailboxSafe(playerUUID);
     }
 
     public static boolean canPlayerAcceptMessages(UUID playerUUID) {

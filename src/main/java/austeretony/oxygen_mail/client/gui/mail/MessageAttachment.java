@@ -116,7 +116,7 @@ public class MessageAttachment extends GUISimpleElement<MessageAttachment> {
     public void load(EnumMail type, Attachment attachment) {
         this.mode = - 1; 
         this.itemStack = null;
-        
+
         this.currencyProperties = OxygenHelperClient.getCurrencyProperties(attachment.getCurrencyIndex());
         switch (type) {
         case REMITTANCE:

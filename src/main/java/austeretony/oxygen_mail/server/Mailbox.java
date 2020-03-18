@@ -77,7 +77,7 @@ public class Mailbox {
     }
 
     public  long createId(long seed) {
-        long id = seed + 1L;
+        long id = ++seed;
         while (this.mail.containsKey(id))
             id++;
         return id;
@@ -100,5 +100,9 @@ public class Mailbox {
             mailbox.mail.put(message.getId(), message);
         }
         return mailbox;
+    }
+
+    public void clear() {
+        this.mail.clear();
     }
 }

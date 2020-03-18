@@ -1,6 +1,7 @@
 package austeretony.oxygen_mail.common.mail;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 
 import austeretony.oxygen_core.client.api.ClientReference;

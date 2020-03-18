@@ -45,12 +45,10 @@ oxygen_mail.gui.mail.callback.sendMessage=Sending
 oxygen_mail.gui.mail.sendTo=To:
 oxygen_mail.gui.mail.subject=Subject:
 
-oxygen_mail.gui.mail.playerOnline=Player online
-oxygen_mail.gui.mail.playerOffline=Player offline or not exist
 oxygen_mail.gui.mail.postage=Postage:
 oxygen_mail.gui.mail.remittance=Remittance
 oxygen_mail.gui.mail.cod=C.O.D.
-oxygen_mail.gui.mail.package=Package
+oxygen_mail.gui.mail.parcel=Parcel
 
 oxygen_mail.gui.mail.msg.sender=From: %s
 oxygen_mail.gui.mail.msg.expires=Expires in: %s
@@ -65,23 +63,31 @@ oxygen_mail.mail.remittance=Remittance
 oxygen_mail.mail.parcel=Parcel
 oxygen_mail.mail.cod=C.O.D.
 
+oxygen_mail.gui.mail.label.currencyAmount=Currency:
+oxygen_mail.gui.mail.label.itemAmount=Item:
+
 mail.sender.sys=System
-mail.message.attachmentReturn=Player §f%s§r returned attachment.
+mail.subject.returnExp=Attachment Return
+mail.message.returnExp=Return of expired mail attachment.
+mail.message.attachmentReturn=§f%s§r returned attachment.
 mail.cod.pay.s=C.O.D. Payment
-mail.cod.pay.m=Player paid for <§f%s§rx§f%s§r>.
+mail.cod.pay.m=§f%s§r paid for <§f%s§rx§f%s§r>.
 
 oxygen_mail.sorting.receiveTime=Receive Time
 oxygen_mail.sorting.subject=Subject
 
-oxygen_mail.status.playerNotFound=Player not found
-oxygen_mail.status.parcelDamaged=Parcel damaged
-oxygen_mail.status.itemBlackListed=Item blacklisted
-oxygen_mail.status.messageSent=Message sent
-oxygen_mail.status.messageSendingFailed=Message sending failed
-oxygen_mail.status.attachmentReceived=Attachment received
-oxygen_mail.status.messageReturned=Attachment returned to sender
-oxygen_mail.status.messageRemoved=Message removed
+oxygen_mail.status.message.playerNotFound=Player not found
+oxygen_mail.status.message.parcelDamaged=Parcel damaged
+oxygen_mail.status.message.itemBlackListed=Item blacklisted
+oxygen_mail.status.message.messageSent=Message sent
+oxygen_mail.status.message.messageSendingFailed=Message sending failed
+oxygen_mail.status.message.attachmentReceived=Attachment received
+oxygen_mail.status.message.messageReturned=Attachment returned to sender
+oxygen_mail.status.message.messageRemoved=Message removed
+
+oxygen_mail.status.message.mailboxesCleared=All mailboxes cleared
+oxygen_mail.status.message.mailboxCleared=Mailbox cleared
 
 oxygen_mail.message.command.oxygens.mail.letterSent=Letter sent to <%s> - subject: %s, message: %s
-oxygen_mail.message.command.oxygens.mail.remittanceSent=Remittance sent to <%s> - subject: %s, message: %s, value: %s
-oxygen_mail.message.command.oxygens.mail.packageSent=Package sent to <%s> - subject: %s, message: %s, amount: %s, item: %s
+oxygen_mail.message.command.oxygens.mail.remittanceSent=Remittance sent to <%s> - subject: %s, message: %s, index: %d, value: %d
+oxygen_mail.message.command.oxygens.mail.parcelSent=Package sent to <%s> - subject: %s, message: %s, amount: %d, item: %s

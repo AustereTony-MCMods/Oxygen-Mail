@@ -70,17 +70,24 @@ public class MailboxesManagerServer {
     }
 
     private void processExpiredMessage(Mail message) {
-        if (message.getType() == EnumMail.REMITTANCE 
-                || message.getType() == EnumMail.PARCEL
-                || message.getType() == EnumMail.COD)
+        if (message.getType() == EnumMail.PARCEL || message.getType() == EnumMail.COD)
             this.sendSystemMail(
                     message.getSenderUUID(), 
                     Mail.SYSTEM_SENDER, 
                     EnumMail.PARCEL, 
-                    "mail.subject.return", 
+                    "mail.subject.returnExp", 
+                    Attachments.parcel(message.getAttachment().getStackWrapper(), message.getAttachment().getItemAmount()), 
+                    true, 
+                    "mail.message.returnExp");
+        else if (message.getType() == EnumMail.REMITTANCE)
+            this.sendSystemMail(
+                    message.getSenderUUID(), 
+                    Mail.SYSTEM_SENDER, 
+                    EnumMail.REMITTANCE, 
+                    "mail.subject.returnExp", 
                     message.getAttachment(), 
                     true, 
-                    "mail.message.attachmentReturn");
+                    "mail.message.returnExp");
     }
 
     private void sendNewMessageNotification(UUID playerUUID) {
@@ -385,12 +392,13 @@ public class MailboxesManagerServer {
                 ItemStack itemStack = mail.getAttachment().getStackWrapper().getItemStack();
                 this.sendSystemMail(
                         mail.getSenderUUID(),
-                        CommonReference.getName(playerMP), 
+                        Mail.SYSTEM_SENDER, 
                         EnumMail.REMITTANCE,
                         "mail.cod.pay.s", 
                         Attachments.remittance(mail.getAttachment().getCurrencyIndex(), mail.getAttachment().getCurrencyValue() - codPostage),
                         true,
                         "mail.cod.pay.m",
+                        CommonReference.getName(playerMP), 
                         String.valueOf(mail.getAttachment().getItemAmount()),
                         itemStack.getDisplayName());
             }            
@@ -406,18 +414,24 @@ public class MailboxesManagerServer {
     }
 
     private boolean returnAttachmentToSender(EntityPlayerMP playerMP, Mail message) {
-        if (message.getType() == EnumMail.REMITTANCE 
-                || message.getType() == EnumMail.PARCEL
-                || message.getType() == EnumMail.COD) {
-            EnumMail type = message.getType();
-            if (message.getType() == EnumMail.COD)
-                type = EnumMail.PARCEL;
+        if (message.getType() == EnumMail.PARCEL || message.getType() == EnumMail.COD) {
             if (this.sendSystemMail(
                     message.getSenderUUID(), 
                     Mail.SYSTEM_SENDER,
-                    type,
-                    String.format("RE: %s", message.getSubject()), 
+                    EnumMail.PARCEL,
+                    message.getSubject(), 
                     Attachments.parcel(message.getAttachment().getStackWrapper(), message.getAttachment().getItemAmount()), 
+                    true,
+                    "mail.message.attachmentReturn",
+                    CommonReference.getName(playerMP)))
+                return true;
+        } else if (message.getType() == EnumMail.REMITTANCE) {
+            if (this.sendSystemMail(
+                    message.getSenderUUID(), 
+                    Mail.SYSTEM_SENDER,
+                    EnumMail.REMITTANCE,
+                    message.getSubject(), 
+                    message.getAttachment(), 
                     true,
                     "mail.message.attachmentReturn",
                     CommonReference.getName(playerMP)))

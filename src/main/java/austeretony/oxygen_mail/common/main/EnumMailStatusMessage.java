@@ -11,12 +11,15 @@ public enum EnumMailStatusMessage {
     MESSAGE_SENDING_FAILED("messageSendingFailed"),
     ATTACHMENT_RECEIVED("attachmentReceived"),
     MESSAGE_RETURNED("messageReturned"),
-    MESSAGE_REMOVED("messageRemoved");
+    MESSAGE_REMOVED("messageRemoved"),
+
+    MAILBOXES_CLEARED("mailboxesCleared"),
+    MAILBOX_CLEARED("mailboxCleared");
 
     private final String status;
 
     EnumMailStatusMessage(String status) {
-        this.status = "oxygen_mail.status." + status;
+        this.status = "oxygen_mail.status.message." + status;
     }
 
     public String localizedName() {

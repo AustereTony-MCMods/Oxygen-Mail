@@ -19,7 +19,7 @@ public interface Attachment {
     @Nullable
     ItemStackWrapper getStackWrapper();
 
-    void write(BufferedOutputStream bos) throws IOException ;
+    void write(BufferedOutputStream bos) throws IOException;
 
     void write(ByteBuf buffer);
 }

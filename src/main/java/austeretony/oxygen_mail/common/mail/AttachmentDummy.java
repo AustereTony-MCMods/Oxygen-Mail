@@ -32,13 +32,13 @@ public class AttachmentDummy implements Attachment {
     }
 
     @Override
+    public String toString() {
+        return "[dummy attachment]";
+    }
+
+    @Override
     public void write(BufferedOutputStream bos) throws IOException {}
 
     @Override
     public void write(ByteBuf buffer) {}
-
-    @Override
-    public String toString() {
-        return "[dummy attachment]";
-    }
 }
