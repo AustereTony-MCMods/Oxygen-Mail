@@ -116,6 +116,7 @@ public class MailMenuScreen extends AbstractGUIScreen {
     }
 
     public void mailSent(EnumMail type, Attachment attachment, long balance) {
+        attachment.sent();
         this.incomingSection.mailSent(type, attachment, balance);
         this.sendingSection.mailSent(type, attachment, balance);
     }
@@ -126,6 +127,7 @@ public class MailMenuScreen extends AbstractGUIScreen {
     }
 
     public void attachmentReceived(long oldMessageId, Mail mail, long balance) {
+        mail.getAttachment().received();
         this.incomingSection.attachmentReceived(oldMessageId, mail, balance);
         this.sendingSection.attachmentReceived(oldMessageId, mail, balance);
     }

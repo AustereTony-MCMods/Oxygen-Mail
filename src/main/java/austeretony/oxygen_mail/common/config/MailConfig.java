@@ -27,12 +27,12 @@ public class MailConfig extends AbstractConfig {
 
     MAIL_SENDING_COOLDOWN_SECONDS = ConfigValueUtils.getValue("server", "mail_sending_cooldown_seconds", 30),
     REMITTANCE_MAX_VALUE = ConfigValueUtils.getValue("server", "remittance_max_value", 100000L, true),
-    PACKAGE_MAX_AMOUNT = ConfigValueUtils.getValue("server", "package_max_amount", - 1, true),
+    PARCEL_MAX_AMOUNT = ConfigValueUtils.getValue("server", "parcel_max_amount", - 1, true),
     COD_MAX_VALUE = ConfigValueUtils.getValue("server", "cod_max_value", 50000L, true),
 
     LETTER_POSTAGE_VALUE = ConfigValueUtils.getValue("server", "letter_postage_value", 0L, true),
     REMITTANCE_POSTAGE_PERCENT = ConfigValueUtils.getValue("server", "remittance_postage_percent", 5, true),
-    PACKAGE_POSTAGE_VALUE = ConfigValueUtils.getValue("server", "package_postage_value", 100L, true),
+    PARCEL_POSTAGE_VALUE = ConfigValueUtils.getValue("server", "parcel_postage_value", 100L, true),
     COD_POSTAGE_PERCENT = ConfigValueUtils.getValue("server", "cod_postage_percent", 5, true),
 
     ADVANCED_LOGGING = ConfigValueUtils.getValue("server", "advanced_logging", false);
@@ -70,11 +70,11 @@ public class MailConfig extends AbstractConfig {
 
         values.add(MAIL_SENDING_COOLDOWN_SECONDS);
         values.add(REMITTANCE_MAX_VALUE);
-        values.add(PACKAGE_MAX_AMOUNT);
+        values.add(PARCEL_MAX_AMOUNT);
         values.add(COD_MAX_VALUE);
 
         values.add(REMITTANCE_POSTAGE_PERCENT);
-        values.add(PACKAGE_POSTAGE_VALUE);
+        values.add(PARCEL_POSTAGE_VALUE);
         values.add(COD_POSTAGE_PERCENT);
 
         values.add(ADVANCED_LOGGING);

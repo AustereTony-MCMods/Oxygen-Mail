@@ -9,18 +9,13 @@ import austeretony.oxygen_core.common.PlayerSharedData;
 import austeretony.oxygen_core.common.api.CommonReference;
 import austeretony.oxygen_core.common.api.notification.SimpleNotification;
 import austeretony.oxygen_core.common.main.OxygenMain;
-import austeretony.oxygen_core.common.sound.OxygenSoundEffects;
-import austeretony.oxygen_core.common.util.MathUtils;
 import austeretony.oxygen_core.server.api.CurrencyHelperServer;
-import austeretony.oxygen_core.server.api.InventoryProviderServer;
 import austeretony.oxygen_core.server.api.OxygenHelperServer;
 import austeretony.oxygen_core.server.api.PrivilegesProviderServer;
-import austeretony.oxygen_core.server.api.SoundEventHelperServer;
 import austeretony.oxygen_core.server.api.TimeHelperServer;
 import austeretony.oxygen_mail.common.EnumMessageOperation;
 import austeretony.oxygen_mail.common.config.MailConfig;
 import austeretony.oxygen_mail.common.mail.Attachment;
-import austeretony.oxygen_mail.common.mail.Attachments;
 import austeretony.oxygen_mail.common.mail.EnumMail;
 import austeretony.oxygen_mail.common.mail.Mail;
 import austeretony.oxygen_mail.common.main.EnumMailPrivilege;
@@ -30,9 +25,6 @@ import austeretony.oxygen_mail.common.network.client.CPAttachmentReceived;
 import austeretony.oxygen_mail.common.network.client.CPMailSent;
 import austeretony.oxygen_mail.common.network.client.CPMessageRemoved;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 
 public class MailboxesManagerServer {
 
@@ -47,7 +39,7 @@ public class MailboxesManagerServer {
     }
 
     public void processExpiredMail() {
-        OxygenHelperServer.addRoutineTask(()->{
+        final Runnable task = ()->{
             int removed = 0;
             Iterator<Mail> iterator;
             Mail mail;
@@ -55,18 +47,21 @@ public class MailboxesManagerServer {
                 iterator = mailbox.getMessages().iterator();
                 while (iterator.hasNext()) {
                     mail = iterator.next();
-                    if (mail.isExpired()) {
-                        if (mail.isPending())
-                            this.processExpiredMessage(mail);
-                        iterator.remove();
-                        removed++;
+                    if (mail != null) {
+                        if (mail.isExpired()) {
+                            if (mail.isPending())
+                                this.processExpiredMessage(mail);
+                            iterator.remove();
+                            removed++;
+                        }
                     }
                 }
             }
             if (removed > 0)
                 this.manager.getMailboxesContainer().setChanged(true);
             OxygenMain.LOGGER.info("[Mail] Expired mail processed. Removed {} messages in total.", removed);
-        });
+        };
+        OxygenHelperServer.addRoutineTask(task);
     }
 
     private void processExpiredMessage(Mail message) {
@@ -76,7 +71,7 @@ public class MailboxesManagerServer {
                     Mail.SYSTEM_SENDER, 
                     EnumMail.PARCEL, 
                     "mail.subject.returnExp", 
-                    Attachments.parcel(message.getAttachment().getStackWrapper(), message.getAttachment().getItemAmount()), 
+                    message.getAttachment().toParcel(), 
                     true, 
                     "mail.message.returnExp");
         else if (message.getType() == EnumMail.REMITTANCE)
@@ -106,7 +101,7 @@ public class MailboxesManagerServer {
     }
 
     private void processMailSendingQueue() {
-        Runnable task = ()->{
+        final Runnable task = ()->{
             while (!this.mailSendingQueue.isEmpty()) {
                 final QueuedMailSending queued = this.mailSendingQueue.poll();
                 if (queued != null)
@@ -144,38 +139,8 @@ public class MailboxesManagerServer {
             Mailbox senderMailbox = this.manager.getMailboxesContainer().getPlayerMailbox(senderUUID);
             if (senderMailbox.canSendMessage()) {
                 Mailbox targetMailbox = this.manager.getMailboxesContainer().getPlayerMailbox(addresseeUUID);
-                if (targetMailbox.canAcceptMessages()) {
-                    switch (type) {
-                    case LETTER:
-                        attachment = Attachments.dummy();
-                        if (message.isEmpty())
-                            return false;
-                        if (!this.processLetter(senderMP, senderUUID))
-                            return false;
-                        break;
-                    case REMITTANCE:
-                        if (attachment.getCurrencyValue() <= 0L)
-                            return false;
-                        if (!isReturn && !this.processRemittance(senderMP, senderUUID, attachment.getCurrencyValue()))
-                            return false;
-                        break;
-                    case PARCEL:
-                        if (!this.validateParcel(senderMP, attachment))
-                            return false;
-                        if (!isReturn && !this.processPackage(senderMP, senderUUID, attachment))
-                            return false;
-                        break;
-                    case COD:
-                        if (attachment.getCurrencyValue() <= 0L)
-                            return false;
-                        if (!this.validateParcel(senderMP, attachment))
-                            return false;
-                        if (!isReturn && !this.processCOD(senderMP, senderUUID, attachment))
-                            return false;
-                        break;
-                    default:
-                        return false;
-                    }                 
+                if (targetMailbox.canAcceptMessages()
+                        && attachment.send(senderMP, null)) {
                     senderMailbox.applySendingCooldown();
                     this.addMessage(targetMailbox, type, senderUUID, CommonReference.getName(senderMP), subject, attachment, message);
                     OxygenMain.network().sendTo(new CPMailSent(type, attachment, CurrencyHelperServer.getCurrency(senderUUID, OxygenMain.COMMON_CURRENCY_INDEX)), senderMP);
@@ -185,18 +150,6 @@ public class MailboxesManagerServer {
             }
         }
         return false;
-    }
-
-    private boolean validateParcel(EntityPlayerMP playerMP, Attachment attachment) {
-        if (attachment.getStackWrapper() == null || (attachment.getStackWrapper().getItemId() == Item.getIdFromItem(Items.AIR) || attachment.getItemAmount() <= 0)) {
-            this.manager.sendStatusMessages(playerMP, EnumMailStatusMessage.PARCEL_DAMAGED);
-            return false;
-        }
-        if (this.manager.getItemsBlackList().isBlackListed(Item.getItemById(attachment.getStackWrapper().getItemId()))) {
-            this.manager.sendStatusMessages(playerMP, EnumMailStatusMessage.ITEM_BLACKLISTED);
-            return false;
-        }
-        return true;
     }
 
     private void addMessage(Mailbox targetMailbox, EnumMail type, UUID senderUUID, String senderName, String subject, Attachment attachment, String message, String... messageArgs) {
@@ -223,89 +176,19 @@ public class MailboxesManagerServer {
                             targetMailbox.getPlayerUUID());
     }
 
-    private boolean processLetter(EntityPlayerMP senderMP, UUID senderUUID) {
-        long letterPostage = PrivilegesProviderServer.getAsLong(senderUUID, EnumMailPrivilege.LETTER_POSTAGE_VALUE.id(), MailConfig.LETTER_POSTAGE_VALUE.asLong());
-        boolean postageExist = letterPostage > 0L;//to avoid dummy currency operations
-        if (!postageExist || CurrencyHelperServer.enoughCurrency(senderUUID, letterPostage, OxygenMain.COMMON_CURRENCY_INDEX)) {
-            if (postageExist) {
-                CurrencyHelperServer.removeCurrency(senderUUID, letterPostage, OxygenMain.COMMON_CURRENCY_INDEX);
-                SoundEventHelperServer.playSoundClient(senderMP, OxygenSoundEffects.RINGING_COINS.getId());
-            }
-            return true;
-        }
-        return false;
-    }
-
-    private boolean processRemittance(EntityPlayerMP senderMP, UUID senderUUID, long remittanceValue) {
-        if (remittanceValue <= PrivilegesProviderServer.getAsLong(senderUUID, EnumMailPrivilege.REMITTANCE_MAX_VALUE.id(), MailConfig.REMITTANCE_MAX_VALUE.asLong())) {
-            long remittancePostage = MathUtils.percentValueOf(remittanceValue, 
-                    PrivilegesProviderServer.getAsInt(senderUUID, EnumMailPrivilege.REMITTANCE_POSTAGE_PERCENT.id(), MailConfig.REMITTANCE_POSTAGE_PERCENT.asInt()));
-            if (CurrencyHelperServer.enoughCurrency(senderUUID, remittanceValue + remittancePostage, OxygenMain.COMMON_CURRENCY_INDEX)) {
-                CurrencyHelperServer.removeCurrency(senderUUID, remittanceValue + remittancePostage, OxygenMain.COMMON_CURRENCY_INDEX);
-                SoundEventHelperServer.playSoundClient(senderMP, OxygenSoundEffects.RINGING_COINS.getId());
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean processPackage(EntityPlayerMP senderMP, UUID senderUUID, Attachment attachment) {
-        int maxAmount = PrivilegesProviderServer.getAsInt(senderUUID, EnumMailPrivilege.PARCEL_MAX_AMOUNT.id(), MailConfig.PACKAGE_MAX_AMOUNT.asInt());
-        final ItemStack itemStack = attachment.getStackWrapper().getItemStack();
-        if (maxAmount < 0) 
-            maxAmount = itemStack.getMaxStackSize();
-        if (attachment.getItemAmount() <= maxAmount) {
-            long packagePostage = PrivilegesProviderServer.getAsLong(senderUUID, EnumMailPrivilege.PARCEL_POSTAGE_VALUE.id(), MailConfig.PACKAGE_POSTAGE_VALUE.asLong());
-            boolean postageExist = packagePostage > 0;
-            if (InventoryProviderServer.getPlayerInventory().getEqualItemAmount(senderMP, attachment.getStackWrapper()) >= attachment.getItemAmount()
-                    && (!postageExist || CurrencyHelperServer.enoughCurrency(senderUUID, packagePostage, OxygenMain.COMMON_CURRENCY_INDEX))) {
-                final int amount = attachment.getItemAmount();
-                InventoryProviderServer.getPlayerInventory().removeItem(senderMP, attachment.getStackWrapper(), amount);
-
-                if (postageExist) {
-                    CurrencyHelperServer.removeCurrency(senderUUID, packagePostage, OxygenMain.COMMON_CURRENCY_INDEX);
-                    SoundEventHelperServer.playSoundClient(senderMP, OxygenSoundEffects.RINGING_COINS.getId());
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean processCOD(EntityPlayerMP senderMP, UUID senderUUID, Attachment attachment) {
-        if (attachment.getCurrencyValue() <= PrivilegesProviderServer.getAsLong(senderUUID, EnumMailPrivilege.COD_MAX_VALUE.id(), MailConfig.COD_MAX_VALUE.asLong())) {
-            int maxAmount = PrivilegesProviderServer.getAsInt(senderUUID, EnumMailPrivilege.PARCEL_MAX_AMOUNT.id(), MailConfig.PACKAGE_MAX_AMOUNT.asInt());
-            final ItemStack itemStack = attachment.getStackWrapper().getItemStack();
-            if (maxAmount < 0) 
-                maxAmount = itemStack.getMaxStackSize();
-            if (attachment.getItemAmount() <= maxAmount) {
-                long packagePostage = PrivilegesProviderServer.getAsLong(senderUUID, EnumMailPrivilege.PARCEL_POSTAGE_VALUE.id(), MailConfig.PACKAGE_POSTAGE_VALUE.asLong());
-                boolean postageExist = packagePostage > 0;
-                if (InventoryProviderServer.getPlayerInventory().getEqualItemAmount(senderMP, attachment.getStackWrapper()) >= attachment.getItemAmount()
-                        && (!postageExist || CurrencyHelperServer.enoughCurrency(senderUUID, packagePostage, OxygenMain.COMMON_CURRENCY_INDEX))) {
-                    final int amount = attachment.getItemAmount();
-                    InventoryProviderServer.getPlayerInventory().removeItem(senderMP, attachment.getStackWrapper(), amount);
-                    if (postageExist) {
-                        CurrencyHelperServer.removeCurrency(senderUUID, packagePostage, OxygenMain.COMMON_CURRENCY_INDEX);
-                        SoundEventHelperServer.playSoundClient(senderMP, OxygenSoundEffects.RINGING_COINS.getId());
-                    }
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     public void processMessageOperation(EntityPlayerMP playerMP, long messageId, EnumMessageOperation operation) {
         this.mailOperationsQueue.offer(new QueuedMailOperation(CommonReference.getPersistentUUID(playerMP), messageId, operation));
     }
 
     private void processMailOperationsQueue() {
-        while (!this.mailOperationsQueue.isEmpty()) {
-            final QueuedMailOperation queued = this.mailOperationsQueue.poll();
-            if (queued != null)
-                OxygenHelperServer.addRoutineTask(()->this.processMessageOperationQueue(queued));
-        }
+        final Runnable task = ()->{
+            while (!this.mailOperationsQueue.isEmpty()) {
+                final QueuedMailOperation queued = this.mailOperationsQueue.poll();
+                if (queued != null)
+                    this.processMessageOperationQueue(queued);
+            }
+        };
+        OxygenHelperServer.addRoutineTask(task);
     }
 
     private void processMessageOperationQueue(QueuedMailOperation queued) {
@@ -316,7 +199,7 @@ public class MailboxesManagerServer {
             switch (queued.operation) {
             case TAKE_ATTACHMENT:
                 if (mail.isPending() 
-                        && this.takeAttachment(playerMP, queued.playerUUID, mail)) {
+                        && mail.getAttachment().receive(playerMP, mail)) {
                     mailbox.removeMessage(queued.messageId);
 
                     mail.setId(mailbox.createId(queued.messageId));
@@ -378,41 +261,6 @@ public class MailboxesManagerServer {
         }
     }
 
-    private boolean takeAttachment(EntityPlayerMP playerMP, UUID playerUUID, Mail mail) {
-        if (mail.getType() == EnumMail.PARCEL 
-                || mail.getType() == EnumMail.COD) {
-            if (!InventoryProviderServer.getPlayerInventory().haveEnoughSpace(playerMP,  mail.getAttachment().getStackWrapper(), mail.getAttachment().getItemAmount()))
-                return false;
-            if (mail.getType() == EnumMail.COD) {
-                if (!CurrencyHelperServer.enoughCurrency(playerUUID, mail.getAttachment().getCurrencyValue(), mail.getAttachment().getCurrencyIndex()))
-                    return false;
-                CurrencyHelperServer.removeCurrency(playerUUID, mail.getAttachment().getCurrencyValue(), mail.getAttachment().getCurrencyIndex());
-                long codPostage = MathUtils.percentValueOf(mail.getAttachment().getCurrencyValue(), 
-                        PrivilegesProviderServer.getAsInt(mail.getSenderUUID(), EnumMailPrivilege.COD_POSTAGE_PERCENT.id(), MailConfig.COD_POSTAGE_PERCENT.asInt()));
-                ItemStack itemStack = mail.getAttachment().getStackWrapper().getItemStack();
-                this.sendSystemMail(
-                        mail.getSenderUUID(),
-                        Mail.SYSTEM_SENDER, 
-                        EnumMail.REMITTANCE,
-                        "mail.cod.pay.s", 
-                        Attachments.remittance(mail.getAttachment().getCurrencyIndex(), mail.getAttachment().getCurrencyValue() - codPostage),
-                        true,
-                        "mail.cod.pay.m",
-                        CommonReference.getName(playerMP), 
-                        String.valueOf(mail.getAttachment().getItemAmount()),
-                        itemStack.getDisplayName());
-            }            
-            InventoryProviderServer.getPlayerInventory().addItem(playerMP, mail.getAttachment().getStackWrapper(), mail.getAttachment().getItemAmount());            
-            SoundEventHelperServer.playSoundClient(playerMP, OxygenSoundEffects.INVENTORY_OPERATION.getId());
-            return true;
-        } else if (mail.getType() == EnumMail.REMITTANCE) {
-            CurrencyHelperServer.addCurrency(playerUUID, mail.getAttachment().getCurrencyValue(), mail.getAttachment().getCurrencyIndex());
-            SoundEventHelperServer.playSoundClient(playerMP, OxygenSoundEffects.RINGING_COINS.getId());
-            return true;
-        }
-        return false;
-    }
-
     private boolean returnAttachmentToSender(EntityPlayerMP playerMP, Mail message) {
         if (message.getType() == EnumMail.PARCEL || message.getType() == EnumMail.COD) {
             if (this.sendSystemMail(
@@ -420,7 +268,7 @@ public class MailboxesManagerServer {
                     Mail.SYSTEM_SENDER,
                     EnumMail.PARCEL,
                     message.getSubject(), 
-                    Attachments.parcel(message.getAttachment().getStackWrapper(), message.getAttachment().getItemAmount()), 
+                    message.getAttachment().toParcel(), 
                     true,
                     "mail.message.attachmentReturn",
                     CommonReference.getName(playerMP)))

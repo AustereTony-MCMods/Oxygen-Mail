@@ -9,22 +9,18 @@ import austeretony.alternateui.screen.core.AbstractGUISection;
 import austeretony.alternateui.screen.core.GUIBaseElement;
 import austeretony.oxygen_core.client.api.ClientReference;
 import austeretony.oxygen_core.client.api.EnumBaseGUISetting;
-import austeretony.oxygen_core.client.api.PrivilegesProviderClient;
 import austeretony.oxygen_core.client.gui.elements.OxygenCallbackBackgroundFiller;
 import austeretony.oxygen_core.client.gui.elements.OxygenCurrencyValue;
 import austeretony.oxygen_core.client.gui.elements.OxygenKeyButton;
 import austeretony.oxygen_core.client.gui.elements.OxygenTextLabel;
 import austeretony.oxygen_core.common.main.OxygenMain;
-import austeretony.oxygen_core.common.util.MathUtils;
 import austeretony.oxygen_mail.client.MailManagerClient;
 import austeretony.oxygen_mail.client.gui.mail.MailMenuScreen;
 import austeretony.oxygen_mail.client.gui.mail.MessageAttachment;
 import austeretony.oxygen_mail.client.gui.mail.SendingSection;
-import austeretony.oxygen_mail.common.config.MailConfig;
 import austeretony.oxygen_mail.common.mail.Attachment;
 import austeretony.oxygen_mail.common.mail.Attachments;
 import austeretony.oxygen_mail.common.mail.EnumMail;
-import austeretony.oxygen_mail.common.main.EnumMailPrivilege;
 
 public class SendMessageCallback extends AbstractGUICallback {
 
@@ -80,14 +76,18 @@ public class SendMessageCallback extends AbstractGUICallback {
         this.attachmentWidget.disableFull();
         this.confirmButton.enable();
 
-        this.attachment = null;
+        this.attachment = Attachments.dummy();
 
         this.type = this.section.getMessageType();
         switch (this.type) {
         case LETTER:
-            this.attachment = Attachments.dummy();
             break;
         case REMITTANCE:
+            if (this.section.getCurrencyValueField().getTypedNumberAsLong() == 0L) {
+                this.confirmButton.disable();
+                return;
+            }
+
             this.attachment = Attachments.remittance(
                     OxygenMain.COMMON_CURRENCY_INDEX, 
                     this.section.getCurrencyValueField().getTypedNumberAsLong());
@@ -103,6 +103,11 @@ public class SendMessageCallback extends AbstractGUICallback {
                     (int) this.section.getItemAmountField().getTypedNumberAsLong());
             break;
         case COD:
+            if (this.section.getCurrencyValueField().getTypedNumberAsLong() == 0L) {
+                this.confirmButton.disable();
+                return;
+            }
+
             if (this.section.getSelecteItemWrapper() == null) {
                 this.confirmButton.disable();
                 return;
@@ -112,7 +117,7 @@ public class SendMessageCallback extends AbstractGUICallback {
                     this.section.getSelecteItemWrapper(), 
                     (int) this.section.getItemAmountField().getTypedNumberAsLong(), 
                     OxygenMain.COMMON_CURRENCY_INDEX,
-                    (int) this.section.getCurrencyValueField().getTypedNumberAsLong());
+                    this.section.getCurrencyValueField().getTypedNumberAsLong());
             break;
         }
         this.messageTypeTextLabel.setDisplayText(this.type.localizedName());
@@ -123,54 +128,19 @@ public class SendMessageCallback extends AbstractGUICallback {
             this.attachmentWidget.load(this.type, this.attachment);
             this.attachmentWidget.enableFull();
         }
-        long 
-        postage = 0L,
-        codComission = 0L,
-        remittance = 0L,
-        value,
-        percent;
 
         this.subject = this.section.getSubjectField().getTypedText();
         this.message = this.section.getMessageBox().getTypedText();
 
-        switch (this.type) {
-        case LETTER:
-            if (this.message.isEmpty())
-                this.confirmButton.disable();
-            value = PrivilegesProviderClient.getAsLong(EnumMailPrivilege.LETTER_POSTAGE_VALUE.id(), MailConfig.LETTER_POSTAGE_VALUE.asLong());
-            postage = value;
-            break;
-        case REMITTANCE:
-            if (this.attachment.getCurrencyValue() <= 0L)
-                this.confirmButton.disable();
-            percent = PrivilegesProviderClient.getAsInt(EnumMailPrivilege.REMITTANCE_POSTAGE_PERCENT.id(), MailConfig.REMITTANCE_POSTAGE_PERCENT.asInt());
-            remittance = this.attachment.getCurrencyValue();
-            postage = MathUtils.percentValueOf(this.attachment.getCurrencyValue(), (int) percent);
-            break;
-        case PARCEL:
-            if (this.attachment.getStackWrapper() == null)
-                this.confirmButton.disable();
-            if (this.attachment.getItemAmount() <= 0)
-                this.confirmButton.disable();
-            value = PrivilegesProviderClient.getAsLong(EnumMailPrivilege.PARCEL_POSTAGE_VALUE.id(), MailConfig.PACKAGE_POSTAGE_VALUE.asLong());
-            postage = value;
-            break;
-        case COD:
-            if (this.attachment.getCurrencyValue() <= 0L || this.attachment.getStackWrapper() == null || this.attachment.getItemAmount() <= 0)
-                this.confirmButton.disable();
-            value = PrivilegesProviderClient.getAsLong(EnumMailPrivilege.PARCEL_POSTAGE_VALUE.id(), MailConfig.PACKAGE_POSTAGE_VALUE.asLong());
-            percent = PrivilegesProviderClient.getAsInt(EnumMailPrivilege.COD_POSTAGE_PERCENT.id(), MailConfig.COD_POSTAGE_PERCENT.asInt());
-            codComission = MathUtils.percentValueOf(this.attachment.getCurrencyValue(), (int) percent);
-            postage = value;
-            break;
-        default:
-            break;
-        }
-        this.postageValue.updateValue(postage + codComission);
-        if (remittance + postage > this.section.getBalanceValue().getValue()) {
+        this.postageValue.updateValue(this.attachment.getPostage());
+        if (this.postageValue.getValue() > this.section.getBalanceValue().getValue()) {
             this.postageValue.setRed(true);
             this.confirmButton.disable();
         }
+
+        if (!this.attachment.canSend())
+            this.confirmButton.disable();
+
         this.postageValue.setX(this.getX() + 8 + this.textWidth(this.postageValue.getDisplayText(), this.postageValue.getTextScale()));
     }
 

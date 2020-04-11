@@ -50,7 +50,7 @@ public class MailMain {
     public static final String 
     MODID = "oxygen_mail",
     NAME = "Oxygen: Mail",
-    VERSION = "0.11.0",
+    VERSION = "0.11.1",
     VERSION_CUSTOM = VERSION + ":beta:0",
     GAME_VERSION = "1.12.2",
     VERSIONS_FORGE_URL = "https://raw.githubusercontent.com/AustereTony-MCMods/Oxygen-Mail/info/mod_versions_forge.json";
@@ -87,7 +87,7 @@ public class MailMain {
             CommonReference.registerEvent(new MailEventsClient());
             OxygenGUIHelper.registerOxygenMenuEntry(MailMenuScreen.MAIL_MENU_ENTRY);
             OxygenHelperClient.registerStatusMessagesHandler(new MailStatusMessagesHandler());
-            OxygenHelperClient.registerSharedDataSyncListener(MAIL_MENU_SCREEN_ID, MailManagerClient.instance().getMailMenuManager()::sharedDataSynchronized);
+            OxygenHelperClient.registerSharedDataSyncListener(MAIL_MENU_SCREEN_ID, MailManagerClient.instance().getMenuManager()::sharedDataSynchronized);
             OxygenHelperClient.registerDataSyncHandler(new MailDataSyncHandlerClient());
             EnumMailClientSetting.register();
             EnumMailGUISetting.register();

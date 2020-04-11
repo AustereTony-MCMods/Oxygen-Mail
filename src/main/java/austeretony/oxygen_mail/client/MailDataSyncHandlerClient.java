@@ -46,6 +46,6 @@ public class MailDataSyncHandlerClient implements DataSyncHandlerClient<Mail> {
 
     @Override
     public DataSyncListener getSyncListener() {
-        return (updated)->MailManagerClient.instance().getMailMenuManager().mailSynchronized();
+        return (updated)->MailManagerClient.instance().getMenuManager().mailSynchronized();
     }
 }

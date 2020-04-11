@@ -21,7 +21,7 @@ public class MailboxManagerClient {
     }
 
     public void mailSent(EnumMail type, Attachment attachment, long balance) {
-        this.manager.getMailMenuManager().mailSent(type, attachment, balance); 
+        this.manager.getMenuManager().mailSent(type, attachment, balance); 
     }
 
     public void processMessageOperationSynced(long messageId, EnumMessageOperation operation) {
@@ -32,12 +32,12 @@ public class MailboxManagerClient {
         this.manager.getMailboxContainer().removeMessage(oldMessageId);
         this.manager.getMailboxContainer().addMessage(mail);
 
-        this.manager.getMailMenuManager().attachmentReceived(oldMessageId, mail, balance);
+        this.manager.getMenuManager().attachmentReceived(oldMessageId, mail, balance);
     }
 
     public void messageRemoved(long messageId) {
         this.manager.getMailboxContainer().removeMessage(messageId);
 
-        this.manager.getMailMenuManager().messageRemoved(messageId);
+        this.manager.getMenuManager().messageRemoved(messageId);
     }
 }

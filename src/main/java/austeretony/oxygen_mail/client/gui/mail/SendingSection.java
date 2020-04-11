@@ -223,7 +223,7 @@ public class SendingSection extends AbstractGUISection {
     public void itemSelected(InventoryItemPanelEntry clicked) {
         clicked.toggle();                    
         this.selectedItemWrapper = clicked.getWrapped();
-        int maxAmount = PrivilegesProviderClient.getAsInt(EnumMailPrivilege.PARCEL_MAX_AMOUNT.id(), MailConfig.PACKAGE_MAX_AMOUNT.asInt());
+        int maxAmount = PrivilegesProviderClient.getAsInt(EnumMailPrivilege.PARCEL_MAX_AMOUNT.id(), MailConfig.PARCEL_MAX_AMOUNT.asInt());
         if (maxAmount < 0) 
             maxAmount = clicked.getWrapped().getCachedItemStack().getMaxStackSize();
         this.itemAmountField.setMaxNumber(MathUtils.lesserOfTwo(this.screen.getEqualStackAmount(clicked.getWrapped()), maxAmount));

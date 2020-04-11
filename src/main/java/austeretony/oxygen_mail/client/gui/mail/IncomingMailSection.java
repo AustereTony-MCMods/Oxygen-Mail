@@ -248,16 +248,17 @@ public class IncomingMailSection extends AbstractGUISection {
                 this.attachment.disableFull();
 
             this.takeAttachmentButton.enable();
-            if (mail.getType() == EnumMail.COD) {
+            if (mail.getType() == EnumMail.COD)
                 this.takeAttachmentButton.setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.button.payForAttachment"));
-                if (this.balanceValue.getValue() < mail.getAttachment().getCurrencyValue()) {
-                    this.attachment.disable();
-                    this.takeAttachmentButton.disable();
-                }
-            } else
+            else
                 this.takeAttachmentButton.setDisplayText(ClientReference.localize("oxygen_mail.gui.mail.button.takeAttachment"));
             if (this.inventoryLoad.isOverloaded())
                 this.takeAttachmentButton.disable();
+
+            if (!mail.getAttachment().canReceive()) {
+                this.attachment.disable();
+                this.takeAttachmentButton.disable();
+            }
         } else
             this.removeMessageButton.enable();
     }
@@ -323,10 +324,8 @@ public class IncomingMailSection extends AbstractGUISection {
 
     public void mailSent(EnumMail type, Attachment attachment, long balance) {
         this.balanceValue.updateValue(balance);
-        if (type == EnumMail.PARCEL || type == EnumMail.COD) {
+        if (type == EnumMail.PARCEL || type == EnumMail.COD)
             this.inventoryLoad.updateLoad();
-            this.screen.removeItemStack(attachment.getStackWrapper(), attachment.getItemAmount());
-        }
     }
 
     public void messageRemoved(long messageId) {
@@ -339,10 +338,8 @@ public class IncomingMailSection extends AbstractGUISection {
     public void attachmentReceived(long oldMessageId, Mail mail, long balance) {
         this.balanceValue.updateValue(balance);
 
-        if (mail.getType() == EnumMail.PARCEL || mail.getType() == EnumMail.COD) {
+        if (mail.getType() == EnumMail.PARCEL || mail.getType() == EnumMail.COD) 
             this.inventoryLoad.updateLoad();
-            this.screen.addItemStack(mail.getAttachment().getStackWrapper(), mail.getAttachment().getItemAmount());
-        }
 
         this.sortMail(0);
         this.initLatestMessageOnMenuOpen();

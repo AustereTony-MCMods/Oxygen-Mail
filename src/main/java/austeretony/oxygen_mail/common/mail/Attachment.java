@@ -5,21 +5,44 @@ import java.io.IOException;
 
 import javax.annotation.Nullable;
 
-import austeretony.oxygen_core.common.item.ItemStackWrapper;
+import austeretony.alternateui.screen.core.GUISimpleElement;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 public interface Attachment {
 
-    int getItemAmount();
+    boolean send(EntityPlayerMP playerMP, @Nullable Mail mail);
 
-    long getCurrencyValue();
+    boolean receive(EntityPlayerMP playerMP, Mail mail);
 
-    int getCurrencyIndex();
+    @SideOnly(Side.CLIENT)
+    long getPostage();
 
-    @Nullable
-    ItemStackWrapper getStackWrapper();
+    @SideOnly(Side.CLIENT)
+    boolean canSend();
+
+    @SideOnly(Side.CLIENT)
+    void sent();
+
+    @SideOnly(Side.CLIENT)
+    boolean canReceive();
+
+    @SideOnly(Side.CLIENT)
+    void received();
+
+    @SideOnly(Side.CLIENT)
+    void draw(GUISimpleElement widget, int mouseX, int mouseY);
 
     void write(BufferedOutputStream bos) throws IOException;
 
     void write(ByteBuf buffer);
+
+    @Nullable
+    Attachment toParcel();
+
+    @Nullable
+    ItemStack getItemStack();
 }

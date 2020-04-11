@@ -1,6 +1,7 @@
 package austeretony.oxygen_mail.client;
 
 import austeretony.oxygen_core.client.api.ClientReference;
+import austeretony.oxygen_core.common.item.ItemStackWrapper;
 import austeretony.oxygen_mail.client.gui.mail.MailMenuScreen;
 import austeretony.oxygen_mail.common.mail.Attachment;
 import austeretony.oxygen_mail.common.mail.EnumMail;
@@ -34,6 +35,20 @@ public class MailMenuManager {
         ClientReference.delegateToClientThread(()->{
             if (isMenuOpened())
                 ((MailMenuScreen) ClientReference.getCurrentScreen()).mailSent(type, attachment, balance);
+        });
+    }
+
+    public void removeItemStack(ItemStackWrapper stackWrapper, int amount) {
+        ClientReference.delegateToClientThread(()->{
+            if (isMenuOpened())
+                ((MailMenuScreen) ClientReference.getCurrentScreen()).removeItemStack(stackWrapper, amount);
+        });
+    }
+
+    public void addItemStack(ItemStackWrapper stackWrapper, int amount) {
+        ClientReference.delegateToClientThread(()->{
+            if (isMenuOpened())
+                ((MailMenuScreen) ClientReference.getCurrentScreen()).addItemStack(stackWrapper, amount);
         });
     }
 

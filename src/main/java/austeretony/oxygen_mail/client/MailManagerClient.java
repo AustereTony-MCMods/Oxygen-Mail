@@ -39,7 +39,7 @@ public final class MailManagerClient {
         return this.mailboxManager;
     }
 
-    public MailMenuManager getMailMenuManager() {
+    public MailMenuManager getMenuManager() {
         return this.mailMenuManager;
     }
 
