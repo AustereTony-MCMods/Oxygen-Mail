@@ -13,6 +13,7 @@ import austeretony.oxygen_core.server.api.OxygenHelperServer;
 import austeretony.oxygen_core.server.api.PrivilegesProviderServer;
 import austeretony.oxygen_core.server.command.CommandOxygenOperator;
 import austeretony.oxygen_core.server.network.NetworkRequestsRegistryServer;
+import austeretony.oxygen_core.server.timeout.TimeOutRegistryServer;
 import austeretony.oxygen_mail.client.MailDataSyncHandlerClient;
 import austeretony.oxygen_mail.client.MailManagerClient;
 import austeretony.oxygen_mail.client.MailStatusMessagesHandler;
@@ -25,6 +26,7 @@ import austeretony.oxygen_mail.client.settings.gui.EnumMailGUISetting;
 import austeretony.oxygen_mail.common.config.MailConfig;
 import austeretony.oxygen_mail.common.network.client.CPAttachmentReceived;
 import austeretony.oxygen_mail.common.network.client.CPMessageRemoved;
+import austeretony.oxygen_mail.common.network.client.CPOpenMailMenu;
 import austeretony.oxygen_mail.common.network.client.CPMailSent;
 import austeretony.oxygen_mail.common.network.server.SPMessageOperation;
 import austeretony.oxygen_mail.common.network.server.SPSendMessage;
@@ -50,7 +52,7 @@ public class MailMain {
     public static final String 
     MODID = "oxygen_mail",
     NAME = "Oxygen: Mail",
-    VERSION = "0.11.1",
+    VERSION = "0.11.2",
     VERSION_CUSTOM = VERSION + ":beta:0",
     GAME_VERSION = "1.12.2",
     VERSIONS_FORGE_URL = "https://raw.githubusercontent.com/AustereTony-MCMods/Oxygen-Mail/info/mod_versions_forge.json";
@@ -64,7 +66,9 @@ public class MailMain {
 
     INCOMING_MESSAGE_NOTIFICATION_ID = 80,
 
-    MESSAGE_OPERATION_REQUEST_ID = 80;
+    MESSAGE_OPERATION_REQUEST_ID = 80,
+    
+    MAIL_TIMEOUT_ID = 80;
 
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
@@ -80,6 +84,7 @@ public class MailMain {
         CommonReference.registerEvent(new MailEventsServer());
         NetworkRequestsRegistryServer.registerRequest(MESSAGE_OPERATION_REQUEST_ID, 500);
         OxygenHelperServer.registerDataSyncHandler(new MailDataSyncHandlerServer());
+        TimeOutRegistryServer.registerTimeOut(MAIL_TIMEOUT_ID, MailConfig.MAIL_MENU_OPERATIONS_TIMEOUT_MILLIS.asInt());
         CommandOxygenOperator.registerArgument(new MailArgumentOperator());
         EnumMailPrivilege.register();
         if (event.getSide() == Side.CLIENT) {
@@ -114,6 +119,7 @@ public class MailMain {
     }
 
     private void initNetwork() {
+        OxygenMain.network().registerPacket(CPOpenMailMenu.class);
         OxygenMain.network().registerPacket(CPMailSent.class);
         OxygenMain.network().registerPacket(CPMessageRemoved.class);
         OxygenMain.network().registerPacket(CPAttachmentReceived.class);

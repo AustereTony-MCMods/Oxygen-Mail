@@ -1,8 +1,12 @@
 package austeretony.oxygen_mail.server.command;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
+
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -20,6 +24,7 @@ import austeretony.oxygen_mail.common.mail.EnumMail;
 import austeretony.oxygen_mail.common.mail.Mail;
 import austeretony.oxygen_mail.common.main.EnumMailStatusMessage;
 import austeretony.oxygen_mail.common.main.MailMain;
+import austeretony.oxygen_mail.common.network.client.CPOpenMailMenu;
 import austeretony.oxygen_mail.server.MailManagerServer;
 import austeretony.oxygen_mail.server.Mailbox;
 import austeretony.oxygen_mail.server.api.MailHelperServer;
@@ -31,6 +36,7 @@ import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 
@@ -52,11 +58,18 @@ public class MailArgumentOperator implements ArgumentExecutor {
         //Package - /oxygens mail -send -all-online 2 {Gift} {Some dummy message for anyone ONLINE.} 10 minecraft:diamond (if last argument is absent, held item will be used) 
         //property '-all' allows to send message to EVERY player ever logged in.
 
-        if (args.length >= 3) {
-            EntityPlayerMP senderPlayerMP = null, targetPlayerMP = null;
-            if (sender instanceof EntityPlayerMP)
-                senderPlayerMP = CommandBase.getCommandSenderAsPlayer(sender);
+        EntityPlayerMP senderPlayerMP = null, targetPlayerMP = null;
+        if (sender instanceof EntityPlayerMP)
+            senderPlayerMP = CommandBase.getCommandSenderAsPlayer(sender);
 
+        if (args.length == 3) {
+            if (args[1].equals("-open-menu")) {
+                targetPlayerMP = CommandBase.getPlayer(server, sender, args[2]);
+                OxygenHelperServer.resetTimeOut(CommonReference.getPersistentUUID(targetPlayerMP), MailMain.MAIL_TIMEOUT_ID);
+                OxygenMain.network().sendTo(new CPOpenMailMenu(), targetPlayerMP);
+            }
+        }
+        if (args.length >= 3) {
             if (args[1].equals("-clear-mail")) {
                 if (args[2].equals("-global")) {
                     MailManagerServer.instance().getMailboxesContainer().reset();
@@ -212,7 +225,7 @@ public class MailArgumentOperator implements ArgumentExecutor {
                         for (UUID playerUUID : OxygenHelperServer.getOnlinePlayersUUIDs())
                             MailHelperServer.sendSystemMail(
                                     playerUUID, 
-                                    Mail.SYSTEM_SENDER, 
+                                    OxygenMain.SYSTEM_SENDER, 
                                     EnumMail.LETTER,
                                     subject, 
                                     Attachments.dummy(),
@@ -247,7 +260,7 @@ public class MailArgumentOperator implements ArgumentExecutor {
                             for (UUID playerUUID : OxygenHelperServer.getOnlinePlayersUUIDs())
                                 MailHelperServer.sendSystemMail(
                                         playerUUID, 
-                                        Mail.SYSTEM_SENDER, 
+                                        OxygenMain.SYSTEM_SENDER, 
                                         EnumMail.REMITTANCE,
                                         subject, 
                                         Attachments.remittance(currencyIndex, value),
@@ -297,7 +310,7 @@ public class MailArgumentOperator implements ArgumentExecutor {
                             for (UUID playerUUID : OxygenHelperServer.getOnlinePlayersUUIDs())
                                 MailHelperServer.sendSystemMail(
                                         playerUUID, 
-                                        Mail.SYSTEM_SENDER, 
+                                        OxygenMain.SYSTEM_SENDER, 
                                         EnumMail.PARCEL,
                                         subject, 
                                         Attachments.parcel(ItemStackWrapper.of(itemStack), amount),
@@ -335,7 +348,7 @@ public class MailArgumentOperator implements ArgumentExecutor {
                         for (PlayerSharedData sharedData : OxygenManagerServer.instance().getSharedDataManager().getPlayersSharedData())
                             MailHelperServer.sendSystemMail(
                                     sharedData.getPlayerUUID(), 
-                                    Mail.SYSTEM_SENDER, 
+                                    OxygenMain.SYSTEM_SENDER, 
                                     EnumMail.LETTER,
                                     subject, 
                                     Attachments.dummy(),
@@ -370,7 +383,7 @@ public class MailArgumentOperator implements ArgumentExecutor {
                             for (PlayerSharedData sharedData : OxygenManagerServer.instance().getSharedDataManager().getPlayersSharedData())
                                 MailHelperServer.sendSystemMail(
                                         sharedData.getPlayerUUID(), 
-                                        Mail.SYSTEM_SENDER, 
+                                        OxygenMain.SYSTEM_SENDER, 
                                         EnumMail.REMITTANCE,
                                         subject, 
                                         Attachments.remittance(currencyIndex, value),
@@ -420,7 +433,7 @@ public class MailArgumentOperator implements ArgumentExecutor {
                             for (PlayerSharedData sharedData : OxygenManagerServer.instance().getSharedDataManager().getPlayersSharedData())
                                 MailHelperServer.sendSystemMail(
                                         sharedData.getPlayerUUID(), 
-                                        Mail.SYSTEM_SENDER, 
+                                        OxygenMain.SYSTEM_SENDER, 
                                         EnumMail.PARCEL,
                                         subject, 
                                         Attachments.parcel(ItemStackWrapper.of(itemStack), amount),
@@ -481,7 +494,7 @@ public class MailArgumentOperator implements ArgumentExecutor {
                         case 0:                        
                             MailHelperServer.sendSystemMail(
                                     playerUUID, 
-                                    Mail.SYSTEM_SENDER, 
+                                    OxygenMain.SYSTEM_SENDER, 
                                     EnumMail.LETTER,
                                     subject, 
                                     Attachments.dummy(),
@@ -516,7 +529,7 @@ public class MailArgumentOperator implements ArgumentExecutor {
                                 long value = CommandBase.parseLong(args[++index], 0, Long.MAX_VALUE);
                                 MailHelperServer.sendSystemMail(
                                         playerUUID, 
-                                        Mail.SYSTEM_SENDER, 
+                                        OxygenMain.SYSTEM_SENDER, 
                                         EnumMail.REMITTANCE,
                                         subject, 
                                         Attachments.remittance(currencyIndex, value),
@@ -567,7 +580,7 @@ public class MailArgumentOperator implements ArgumentExecutor {
 
                                 MailHelperServer.sendSystemMail(
                                         playerUUID, 
-                                        Mail.SYSTEM_SENDER, 
+                                        OxygenMain.SYSTEM_SENDER, 
                                         EnumMail.PARCEL,
                                         subject, 
                                         Attachments.parcel(ItemStackWrapper.of(itemStack), amount),
@@ -605,5 +618,20 @@ public class MailArgumentOperator implements ArgumentExecutor {
                 }
             }
         }
+    }
+
+    @Override
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
+        if (args.length == 2)
+            return CommandBase.getListOfStringsMatchingLastWord(args, "-open-menu", "-clear-mail", "-remove-message", "-send");
+        else if (args.length >= 3) {
+            if (args[1].equals("-clear-mail"))
+                return CommandBase.getListOfStringsMatchingLastWord(args, "-global", "-player");
+            else if (args[1].equals("-remove-message"))
+                return CommandBase.getListOfStringsMatchingLastWord(args, "-subject");
+            else if (args[1].equals("-send"))
+                return CommandBase.getListOfStringsMatchingLastWord(args, "-all-online", "-all");
+        }
+        return Collections.<String>emptyList();
     }
 }

@@ -68,7 +68,7 @@ public class MailboxesManagerServer {
         if (message.getType() == EnumMail.PARCEL || message.getType() == EnumMail.COD)
             this.sendSystemMail(
                     message.getSenderUUID(), 
-                    Mail.SYSTEM_SENDER, 
+                    OxygenMain.SYSTEM_SENDER, 
                     EnumMail.PARCEL, 
                     "mail.subject.returnExp", 
                     message.getAttachment().toParcel(), 
@@ -77,7 +77,7 @@ public class MailboxesManagerServer {
         else if (message.getType() == EnumMail.REMITTANCE)
             this.sendSystemMail(
                     message.getSenderUUID(), 
-                    Mail.SYSTEM_SENDER, 
+                    OxygenMain.SYSTEM_SENDER, 
                     EnumMail.REMITTANCE, 
                     "mail.subject.returnExp", 
                     message.getAttachment(), 
@@ -169,7 +169,7 @@ public class MailboxesManagerServer {
         if (MailConfig.ADVANCED_LOGGING.asBoolean())
             OxygenMain.LOGGER.info("[Mail] Sender {}/{} sent mail <subject: {}, type: {}> with attachment {} to player {}.", 
                     senderName,
-                    senderUUID.equals(Mail.SYSTEM_UUID) ? "SYSTEM" : senderUUID,
+                    senderUUID.equals(OxygenMain.SYSTEM_UUID) ? "SYSTEM" : senderUUID,
                             subject,
                             type,
                             attachment,
@@ -265,7 +265,7 @@ public class MailboxesManagerServer {
         if (message.getType() == EnumMail.PARCEL || message.getType() == EnumMail.COD) {
             if (this.sendSystemMail(
                     message.getSenderUUID(), 
-                    Mail.SYSTEM_SENDER,
+                    OxygenMain.SYSTEM_SENDER,
                     EnumMail.PARCEL,
                     message.getSubject(), 
                     message.getAttachment().toParcel(), 
@@ -276,7 +276,7 @@ public class MailboxesManagerServer {
         } else if (message.getType() == EnumMail.REMITTANCE) {
             if (this.sendSystemMail(
                     message.getSenderUUID(), 
-                    Mail.SYSTEM_SENDER,
+                    OxygenMain.SYSTEM_SENDER,
                     EnumMail.REMITTANCE,
                     message.getSubject(), 
                     message.getAttachment(), 
@@ -289,9 +289,9 @@ public class MailboxesManagerServer {
     }
 
     public boolean sendSystemMail(UUID addresseeUUID, String senderName, EnumMail type, String subject, Attachment attachment, boolean ignoreMailBoxCapacity, String message, String... messageArgs) {
-        Mailbox mailbox = this.manager.getMailboxesContainer().getPlayerMailbox(addresseeUUID);
+        Mailbox mailbox = this.manager.getMailboxesContainer().getPlayerMailboxSafe(addresseeUUID);
         if (mailbox.canAcceptMessages() || ignoreMailBoxCapacity) {
-            this.addMessage(mailbox, type, Mail.SYSTEM_UUID, senderName, subject, attachment, message, messageArgs);
+            this.addMessage(mailbox, type, OxygenMain.SYSTEM_UUID, senderName, subject, attachment, message, messageArgs);
             return true;
         }
         return false;

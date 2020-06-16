@@ -14,6 +14,9 @@ public class MailConfig extends AbstractConfig {
     ENABLE_MAIL_MENU_KEY = ConfigValueUtils.getValue("client", "enable_mail_menu_key", true),
     MAIL_MENU_KEY = ConfigValueUtils.getValue("client", "mail_menu_key", 26),
 
+    ENABLE_MAIL_ACCESS_CLIENTSIDE = ConfigValueUtils.getValue("server", "enable_mail_menu_access_clientside", true, true),
+    MAIL_MENU_OPERATIONS_TIMEOUT_MILLIS = ConfigValueUtils.getValue("server", "mail_menu_operations_timeout_millis", 240000),
+    
     ALLOW_MAIL_SENDING = ConfigValueUtils.getValue("server", "allow_mail_sending", true, true),
     MAILBOX_SIZE = ConfigValueUtils.getValue("server", "mailbox_size", 30, true),
 
@@ -56,6 +59,9 @@ public class MailConfig extends AbstractConfig {
     public void getValues(List<ConfigValue> values) {
         values.add(ENABLE_MAIL_MENU_KEY);
         values.add(MAIL_MENU_KEY);
+        
+        values.add(ENABLE_MAIL_ACCESS_CLIENTSIDE);
+        values.add(MAIL_MENU_OPERATIONS_TIMEOUT_MILLIS);
 
         values.add(ALLOW_MAIL_SENDING);
         values.add(MAILBOX_SIZE);

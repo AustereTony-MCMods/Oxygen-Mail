@@ -26,7 +26,8 @@ public class MailMenuEntry implements OxygenMenuEntry {
 
     @Override
     public boolean isValid() {
-        return EnumMailClientSetting.ADD_MAIL_MENU.get().asBoolean();
+        return MailConfig.ENABLE_MAIL_ACCESS_CLIENTSIDE.asBoolean() 
+                && EnumMailClientSetting.ADD_MAIL_MENU.get().asBoolean();
     }
 
     @Override

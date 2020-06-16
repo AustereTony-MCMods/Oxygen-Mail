@@ -111,7 +111,7 @@ public class AttachmentCOD implements Attachment {
             ItemStack itemStack = this.stackWrapper.getItemStack();
             MailHelperServer.sendSystemMail(
                     mail.getSenderUUID(),
-                    Mail.SYSTEM_SENDER, 
+                    OxygenMain.SYSTEM_SENDER, 
                     EnumMail.REMITTANCE,
                     "mail.cod.pay.s", 
                     Attachments.remittance(this.currencyIndex, this.value - codPostage),

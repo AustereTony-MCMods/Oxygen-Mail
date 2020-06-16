@@ -5,6 +5,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
+import austeretony.oxygen_core.common.main.OxygenMain;
 import austeretony.oxygen_core.common.persistent.PersistentEntry;
 import austeretony.oxygen_core.common.sync.SynchronousEntry;
 import austeretony.oxygen_core.common.util.ByteBufUtils;
@@ -17,10 +18,6 @@ public class Mail implements PersistentEntry, SynchronousEntry {
     public static final int 
     MESSAGE_SUBJECT_MAX_LENGTH = 24,
     MESSAGE_MAX_LENGTH = 800;
-
-    public static final String SYSTEM_SENDER = "mail.sender.sys";
-
-    public static final UUID SYSTEM_UUID = UUID.fromString("d10d07f6-ae3c-4ec6-a055-1160c4cf848a");
 
     private long messageId;
 
@@ -70,7 +67,7 @@ public class Mail implements PersistentEntry, SynchronousEntry {
     }
 
     public boolean isSystemMessage() {
-        return this.senderUUID.equals(SYSTEM_UUID);
+        return this.senderUUID.equals(OxygenMain.SYSTEM_UUID);
     }
 
     public String getSenderName() {

@@ -20,7 +20,8 @@ public class MailKeyHandler {
     @SubscribeEvent
     public void onKeyInput(KeyInputEvent event) {        
         if (this.mailMenuKeybinding != null && this.mailMenuKeybinding.isPressed())
-            MailMenuManager.openMailMenu();
+            if (MailConfig.ENABLE_MAIL_ACCESS_CLIENTSIDE.asBoolean())
+                MailMenuManager.openMailMenu();
     }
 
     public KeyBinding getMailMenuKeybinding() {
