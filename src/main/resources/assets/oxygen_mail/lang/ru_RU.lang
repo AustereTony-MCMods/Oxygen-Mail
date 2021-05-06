@@ -1,91 +1,66 @@
-key.oxygen_mail.mailMenu=Открыть Меню Почты
+key.oxygen_mail.open_mail_screen=Открыть Почту
 
-oxygen_mail.gui.settings.option.addMailMenu=Меню Почты
-oxygen_mail.gui.settings.option.alignmentMailMenu=Меню Почты
+oxygen.gui.setting.mail_screen_alignment=Выравнивание меню почты
+oxygen.gui.setting.add_mail_screen=Добавить меню почты
 
-oxygen_mail.incoming=Вы получили новое письмо.
+oxygen_main.attachment_type.none=Без вложения
+oxygen_main.attachment_type.remittance=Денежный перевод
+oxygen_main.attachment_type.parcel=Посылка
+oxygen_main.attachment_type.cod=Наложенный платёж
 
-oxygen_mail.message.genericTitle=Письмо
-
-oxygen_mail.gui.context.take=Получить
-oxygen_mail.gui.context.pay=Оплатить
-oxygen_mail.gui.context.return=Вернуть
-oxygen_mail.gui.context.remove=Удалить
-
-oxygen_mail.gui.mail.button.takeAttachment=Получить Вложение
-oxygen_mail.gui.mail.button.payForAttachment=Заплатить За Вложение
-oxygen_mail.gui.mail.button.removeMessage=Удалить Сообщение
-
-oxygen_mail.gui.mail.button.sendMessage=Отправить Сообщение
-oxygen_mail.gui.mail.button.selectItem=Выбрать Предмет
+mail.return.subject=>Возврат
+mail.return.message=Игрок вернул ваше отправление.\nПолучатель: %s, тема: %s.
+mail.return_exp.subject=>Возврат (просрочено)
+mail.return_exp.message=Ваше вложение было автоматически возвращено вам по истечению срока получения.\nПолучатель: %s, тема: %s.
+mail.cod_income.subject=Платёж за посылку
+mail.cod_income.message=Игрок оплатил вашу посылку, платёж приложен к этому письму.\nПолучатель: %s, тема: %s.
 
 oxygen_mail.gui.mail.title=Почта
+oxygen_mail.gui.mail.section.incoming_mail=Входящие
+oxygen_mail.gui.mail.section.send_mail=Отправка
 
-oxygen_mail.gui.mail.selectItemButton=Выбрать
-oxygen_mail.gui.mail.sendButton=Отправить
+oxygen_mail.gui.mail.incoming.sorter.by_receive_time=по времени получения
+oxygen_mail.gui.mail.incoming.sorter.by_subject=по теме
 
-oxygen_mail.gui.mail.incoming=Входящие
-oxygen_mail.gui.mail.sending=Отправка
-oxygen_mail.gui.mail.attachment=Вложение
-oxygen_mail.gui.mail.attachment.cost=Стоимость:
-oxygen_mail.gui.mail.addressee=Получатель: %s
-oxygen_mail.gui.mail.noAttachment=Нет Вложения
+oxygen_mail.gui.mail.incoming.button.receive_attachment=Получить вложение
+oxygen_mail.gui.mail.incoming.button.remove_mail=Удалить письмо
 
-oxygen_mail.gui.mail.callback.takeAttachment=Принять Вложение
-oxygen_mail.gui.mail.callback.takeAttachment.request=Принять вложение?
-oxygen_mail.gui.mail.callback.returnAttachment=Вернуть Вложение
-oxygen_mail.gui.mail.callback.returnAttachment.request=Вернуть отправителю?
-oxygen_mail.gui.mail.callback.removeMessage=Удалить Письмо
-oxygen_mail.gui.mail.callback.removeMessage.request=Письмо будет удалено.
-oxygen_mail.gui.mail.callback.selectItem=Выбор Предмета
-oxygen_mail.gui.mail.callback.sendMessage=Отправка
+oxygen_mail.gui.mail.incoming.callback.receive_attachment=Получить Вложение
+oxygen_mail.gui.mail.incoming.callback.receive_attachment.message=Вложение будет получено мгновенно.
+oxygen_mail.gui.mail.incoming.callback.remove_mail=Удалить Письмо
+oxygen_mail.gui.mail.incoming.callback.remove_mail.message=Письмо будет удалено без возможности восстановления.
+oxygen_mail.gui.mail.incoming.callback.return_mail=Вернуть Отправление
+oxygen_mail.gui.mail.incoming.callback.return_mail.message=Отправление будет возвращено отправителю, письмо будет удалено.
 
-oxygen_mail.gui.mail.sendTo=Получатель:
-oxygen_mail.gui.mail.subject=Тема:
+oxygen_mail.gui.mail.label.price=Стоимость:
+oxygen_mail.gui.mail.label.postage=Почтовый взнос:
 
-oxygen_mail.gui.mail.postage=Почтовый Сбор:
-oxygen_mail.gui.mail.remittance=Денежный Перевод
-oxygen_mail.gui.mail.cod=Наложенный Платёж
-oxygen_mail.gui.mail.parcel=Посылка
+oxygen_mail.gui.mail.sending.label.addressee=Получатель
+oxygen_mail.gui.mail.sending.label.subject=Тема
+oxygen_mail.gui.mail.sending.label.attachment=Вложение
 
-oxygen_mail.gui.mail.msg.sender=Отправитель: %s
-oxygen_mail.gui.mail.msg.expires=Истекает через: %s
-oxygen_mail.gui.mail.msg.received=%s назад
+oxygen_mail.gui.mail.sending.button.send_mail=Отправить письмо
 
-oxygen_mail.gui.neverExpires=Никогда
+oxygen_mail.gui.mail.sending.callback.send_mail=Отправить Письмо
 
-oxygen_mail.command.dataReset=Данные <oxygen: mail> сброшены для клиента.
+oxygen_mail.gui.mail.sending.callback.item_selection=Выбор Предмета
+oxygen_mail.gui.mail.sending.callback.item_selection.parcel.message=Выбирите предмет и количество для добавления в посылку.
+oxygen_mail.gui.mail.sending.callback.item_selection.cod.message=Выбирите предмет и количество для добавления в посылку.
 
-oxygen_mail.mail.letter=Письмо
-oxygen_mail.mail.remittance=Денежный Перевод
-oxygen_mail.mail.parcel=Посылка
-oxygen_mail.mail.cod=C.O.D.
+oxygen_mail.gui.mail.incoming.context.receive_attachment=Забрать вложение
+oxygen_mail.gui.mail.incoming.context.return_mail=Вернуть отправителю
+oxygen_mail.gui.mail.incoming.context.remove_mail=Удалить
 
-oxygen_mail.gui.mail.label.currencyAmount=Валюта:
-oxygen_mail.gui.mail.label.itemAmount=Предмет:
-
-mail.sender.sys=Система
-mail.subject.returnExp=Возврат Вложения
-mail.message.returnExp=Возврат просроченного вложения.
-mail.message.attachmentReturn=§f%s§r вернул вложение.
-mail.cod.pay.s=Оплата
-mail.cod.pay.m=§f%s§r оплатил <§f%s§rx§f%s§r>.
-
-oxygen_mail.sorting.receiveTime=Время Получения
-oxygen_mail.sorting.subject=Название
-
-oxygen_mail.status.message.playerNotFound=Игрок не найден
-oxygen_mail.status.message.parcelDamaged=Посылка повреждена
-oxygen_mail.status.message.itemBlackListed=Предмет в чёрном списке
-oxygen_mail.status.message.messageSent=Письмо отправлено
-oxygen_mail.status.message.messageSendingFailed=Сбой при отправке письма
-oxygen_mail.status.message.attachmentReceived=Вложение получено
-oxygen_mail.status.message.messageReturned=Вложение возвращено отправителю
-oxygen_mail.status.message.messageRemoved=Сообщение удалено
-
-oxygen_mail.status.message.mailboxesCleared=Все почтовые ящики очищены
-oxygen_mail.status.message.mailboxCleared=Почтовый ящик очищен
-
-oxygen_mail.message.command.oxygens.mail.letterSent=Письмо отправлено <%s> - тема: %s, сообщение: %s
-oxygen_mail.message.command.oxygens.mail.remittanceSent=Денежный перевод отправлен <%s> - тема: %s, сообщение: %s, индекс: %d, сумма: %d
-oxygen_mail.message.command.oxygens.mail.parcelSent=Посылка отправлена <%s> - тема: %s, сообщение: %s, кол-во: %d, предмет: %s
+oxygen_mail.status_message.mail_sending_unavailable=Отправка почты невозможна
+oxygen_mail.status_message.invalid_subject_or_message=Некорректная тема или сообщение
+oxygen_mail.status_message.mail_sending_cool_down=Вы не можете отправлять письма во время кулдауна
+oxygen_mail.status_message.invalid_attachment=Некорректное вложение
+oxygen_mail.status_message.player_not_found=Получатель не найден
+oxygen_mail.status_message.addressee_mailbox_full=Почтовый ящик получателя переполнен
+oxygen_mail.status_message.unable_to_pay_postage=Недостаточно средств для оплаты почтового взноса
+oxygen_mail.status_message.unable_to_send_attachment=Невозможно отправить вложение
+oxygen_mail.status_message.mail_sent=Письмо отправлено
+oxygen_mail.status_message.mail_removed=Письмо удалено
+oxygen_mail.status_message.mail_returned=Письмо возвращено получателю
+oxygen_mail.status_message.unable_to_receive_attachment=Невозможно получить вложенние
+oxygen_mail.status_message.attachment_received=Вложение получено

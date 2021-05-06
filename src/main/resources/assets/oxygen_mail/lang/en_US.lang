@@ -1,93 +1,66 @@
-key.oxygen_mail.mailMenu=Open Mail Menu
+key.oxygen_mail.open_mail_screen=Open Mail Screen
 
-oxygen_mail.gui.settings.module.mail=Mail
+oxygen.gui.setting.mail_screen_alignment=Mail screen alignment
+oxygen.gui.setting.add_mail_screen=Add mail screen
 
-oxygen_mail.gui.settings.option.addMailMenu=Mail Menu
-oxygen_mail.gui.settings.option.alignmentMailMenu=Mail Menu
+oxygen_main.attachment_type.none=No attachment
+oxygen_main.attachment_type.remittance=Remittance
+oxygen_main.attachment_type.parcel=Parcel
+oxygen_main.attachment_type.cod=C.O.D.
 
-oxygen_mail.incoming=You received new message.
-
-oxygen_mail.message.genericTitle=Letter
-
-oxygen_mail.gui.context.take=Take
-oxygen_mail.gui.context.pay=Pay
-oxygen_mail.gui.context.return=Return
-oxygen_mail.gui.context.remove=Remove
-
-oxygen_mail.gui.mail.button.takeAttachment=Take Attachment
-oxygen_mail.gui.mail.button.payForAttachment=Pay for Attachment
-oxygen_mail.gui.mail.button.removeMessage=Remove Message
-
-oxygen_mail.gui.mail.button.sendMessage=Send Message
-oxygen_mail.gui.mail.button.selectItem=Select Item
+mail.return.subject=>Return
+mail.return.message=The player returned the attachment to you.\nAddressee: %s, subject: %s.
+mail.return_exp.subject=>Return (expired)
+mail.return_exp.message=Your attachment was automatically returned after the retention period expired.\nAddressee: %s, subject: %s.
+mail.cod_income.subject=C.O.D. income
+mail.cod_income.message=The player paid for your package, the income is attached to this letter.\nAddressee: %s, subject: %s.
 
 oxygen_mail.gui.mail.title=Mail
+oxygen_mail.gui.mail.section.incoming_mail=Incoming
+oxygen_mail.gui.mail.section.send_mail=Sending
 
-oxygen_mail.gui.mail.selectItemButton=Select
-oxygen_mail.gui.mail.sendButton=Send
+oxygen_mail.gui.mail.incoming.sorter.by_receive_time=by receive time
+oxygen_mail.gui.mail.incoming.sorter.by_subject=by subject
 
-oxygen_mail.gui.mail.incoming=Incoming
-oxygen_mail.gui.mail.sending=Sending
-oxygen_mail.gui.mail.attachment=Attachment
-oxygen_mail.gui.mail.attachment.cost=Cost:
-oxygen_mail.gui.mail.addressee=To: %s
-oxygen_mail.gui.mail.noAttachment=No Attachment
+oxygen_mail.gui.mail.incoming.button.receive_attachment=Receive attachment
+oxygen_mail.gui.mail.incoming.button.remove_mail=Remove mail
 
-oxygen_mail.gui.mail.callback.takeAttachment=Take Attachment
-oxygen_mail.gui.mail.callback.takeAttachment.request=Take attachment?
-oxygen_mail.gui.mail.callback.returnAttachment=Return Attachment
-oxygen_mail.gui.mail.callback.returnAttachment.request=Return to sender?
-oxygen_mail.gui.mail.callback.removeMessage=Remove Message
-oxygen_mail.gui.mail.callback.removeMessage.request=Message will be removed.
-oxygen_mail.gui.mail.callback.selectItem=Select Item
-oxygen_mail.gui.mail.callback.sendMessage=Sending
+oxygen_mail.gui.mail.incoming.callback.receive_attachment=Receive Attachment
+oxygen_mail.gui.mail.incoming.callback.receive_attachment.message=You will receive the attachment immediately.
+oxygen_mail.gui.mail.incoming.callback.remove_mail=Remove Mail
+oxygen_mail.gui.mail.incoming.callback.remove_mail.message=The letter mail be deleted permanently.
+oxygen_mail.gui.mail.incoming.callback.return_mail=Return mail
+oxygen_mail.gui.mail.incoming.callback.return_mail.message=The attachment will be returned to the sender, the mail will be deleted.
 
-oxygen_mail.gui.mail.sendTo=To:
-oxygen_mail.gui.mail.subject=Subject:
+oxygen_mail.gui.mail.label.price=Price:
+oxygen_mail.gui.mail.label.postage=Postage:
 
-oxygen_mail.gui.mail.postage=Postage:
-oxygen_mail.gui.mail.remittance=Remittance
-oxygen_mail.gui.mail.cod=C.O.D.
-oxygen_mail.gui.mail.parcel=Parcel
+oxygen_mail.gui.mail.sending.label.addressee=Addressee
+oxygen_mail.gui.mail.sending.label.subject=Subject
+oxygen_mail.gui.mail.sending.label.attachment=Attachment
 
-oxygen_mail.gui.mail.msg.sender=From: %s
-oxygen_mail.gui.mail.msg.expires=Expires in: %s
-oxygen_mail.gui.mail.msg.received=%s ago
+oxygen_mail.gui.mail.sending.button.send_mail=Send mail
 
-oxygen_mail.gui.neverExpires=Never
+oxygen_mail.gui.mail.sending.callback.send_mail=Send Mail
 
-oxygen_mail.command.dataReset=<oxygen: mail> client data reset.
+oxygen_mail.gui.mail.sending.callback.item_selection=Item Selection
+oxygen_mail.gui.mail.sending.callback.item_selection.parcel.message=Select the item and quantity to add to the parcel.
+oxygen_mail.gui.mail.sending.callback.item_selection.cod.message=Select the item and quantity to add to the package.
 
-oxygen_mail.mail.letter=Letter
-oxygen_mail.mail.remittance=Remittance
-oxygen_mail.mail.parcel=Parcel
-oxygen_mail.mail.cod=C.O.D.
+oxygen_mail.gui.mail.incoming.context.receive_attachment=Take attachment
+oxygen_mail.gui.mail.incoming.context.return_mail=Return to sender
+oxygen_mail.gui.mail.incoming.context.remove_mail=Remove
 
-oxygen_mail.gui.mail.label.currencyAmount=Currency:
-oxygen_mail.gui.mail.label.itemAmount=Item:
-
-mail.sender.sys=System
-mail.subject.returnExp=Attachment Return
-mail.message.returnExp=Return of expired mail attachment.
-mail.message.attachmentReturn=§f%s§r returned attachment.
-mail.cod.pay.s=C.O.D. Payment
-mail.cod.pay.m=§f%s§r paid for <§f%s§rx§f%s§r>.
-
-oxygen_mail.sorting.receiveTime=Receive Time
-oxygen_mail.sorting.subject=Subject
-
-oxygen_mail.status.message.playerNotFound=Player not found
-oxygen_mail.status.message.parcelDamaged=Parcel damaged
-oxygen_mail.status.message.itemBlackListed=Item blacklisted
-oxygen_mail.status.message.messageSent=Message sent
-oxygen_mail.status.message.messageSendingFailed=Message sending failed
-oxygen_mail.status.message.attachmentReceived=Attachment received
-oxygen_mail.status.message.messageReturned=Attachment returned to sender
-oxygen_mail.status.message.messageRemoved=Message removed
-
-oxygen_mail.status.message.mailboxesCleared=All mailboxes cleared
-oxygen_mail.status.message.mailboxCleared=Mailbox cleared
-
-oxygen_mail.message.command.oxygens.mail.letterSent=Letter sent to <%s> - subject: %s, message: %s
-oxygen_mail.message.command.oxygens.mail.remittanceSent=Remittance sent to <%s> - subject: %s, message: %s, index: %d, value: %d
-oxygen_mail.message.command.oxygens.mail.parcelSent=Package sent to <%s> - subject: %s, message: %s, amount: %d, item: %s
+oxygen_mail.status_message.mail_sending_unavailable=Sending mail is not possible
+oxygen_mail.status_message.invalid_subject_or_message=Invalid subject or message
+oxygen_mail.status_message.mail_sending_cool_down=You cannot send mail during cooldown
+oxygen_mail.status_message.invalid_attachment=Invalid attachment
+oxygen_mail.status_message.player_not_found=Addressee not found
+oxygen_mail.status_message.addressee_mailbox_full=Addressee mailbox is full
+oxygen_mail.status_message.unable_to_pay_postage=Insufficient funds to pay the postage
+oxygen_mail.status_message.unable_to_send_attachment=Unable to send attachment
+oxygen_mail.status_message.mail_sent=Mail sent
+oxygen_mail.status_message.mail_removed=Mail removed
+oxygen_mail.status_message.mail_returned=Mail returned
+oxygen_mail.status_message.unable_to_receive_attachment=Unable to receive attachment
+oxygen_mail.status_message.attachment_received=Attachment received

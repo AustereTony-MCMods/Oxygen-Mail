@@ -1,48 +1,49 @@
 package austeretony.oxygen_mail.common.mail;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-
-import javax.annotation.Nullable;
-
-import austeretony.alternateui.screen.core.GUISimpleElement;
+import austeretony.oxygen_core.client.gui.base.core.Widget;
+import austeretony.oxygen_core.common.util.objects.Pair;
+import austeretony.oxygen_core.server.operation.Operation;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.ItemStack;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.nbt.NBTTagCompound;
+
+import java.util.UUID;
 
 public interface Attachment {
 
-    boolean send(EntityPlayerMP playerMP, @Nullable Mail mail);
+    AttachmentType getType();
 
-    boolean receive(EntityPlayerMP playerMP, Mail mail);
+    boolean isValid(EntityPlayerMP playerMP);
 
-    @SideOnly(Side.CLIENT)
-    long getPostage();
+    long getExpireTimeMillis(MailEntry mailEntry);
 
-    @SideOnly(Side.CLIENT)
-    boolean canSend();
+    Pair<Integer, Long> getPostage(EntityPlayerMP playerMP);
 
-    @SideOnly(Side.CLIENT)
-    void sent();
+    Pair<Integer, Long> getBalance(EntityPlayerMP playerMP);
 
-    @SideOnly(Side.CLIENT)
-    boolean canReceive();
+    void send(EntityPlayerMP playerMP, Operation operation);
 
-    @SideOnly(Side.CLIENT)
-    void received();
+    default void playSendSound(EntityPlayerMP playerMP) {}
 
-    @SideOnly(Side.CLIENT)
-    void draw(GUISimpleElement widget, int mouseX, int mouseY);
+    void receive(Operation operation, MailEntry mailEntry);
 
-    void write(BufferedOutputStream bos) throws IOException;
+    default void playReceiveSound(EntityPlayerMP playerMP) {}
+
+    boolean canBeReturned(MailEntry mailEntry);
+
+    void returnToSender(UUID initiatorUUID, MailEntry mailEntry);
 
     void write(ByteBuf buffer);
 
-    @Nullable
-    Attachment toParcel();
+    NBTTagCompound writeToNBT();
 
-    @Nullable
-    ItemStack getItemStack();
+    //client
+
+    boolean isValid();
+
+    Pair<Integer, Long> getPostage();
+
+    void draw(Widget widget, int mouseX, int mouseY);
+
+    void drawForeground(Widget widget, int mouseX, int mouseY);
 }

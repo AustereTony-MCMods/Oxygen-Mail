@@ -1,271 +1,317 @@
 package austeretony.oxygen_mail.common.mail;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.util.UUID;
-
-import austeretony.alternateui.screen.core.GUIAdvancedElement;
-import austeretony.alternateui.screen.core.GUISimpleElement;
-import austeretony.oxygen_core.client.api.ClientReference;
-import austeretony.oxygen_core.client.api.InventoryProviderClient;
-import austeretony.oxygen_core.client.api.OxygenHelperClient;
-import austeretony.oxygen_core.client.api.PrivilegesProviderClient;
-import austeretony.oxygen_core.client.api.WatcherHelperClient;
-import austeretony.oxygen_core.client.currency.CurrencyProperties;
-import austeretony.oxygen_core.common.api.CommonReference;
+import austeretony.oxygen_core.client.api.OxygenClient;
+import austeretony.oxygen_core.client.api.PrivilegesClient;
+import austeretony.oxygen_core.client.gui.base.GUIUtils;
+import austeretony.oxygen_core.client.gui.base.core.Widget;
+import austeretony.oxygen_core.client.preset.CurrencyProperties;
+import austeretony.oxygen_core.client.settings.CoreSettings;
+import austeretony.oxygen_core.client.util.MinecraftClient;
+import austeretony.oxygen_core.common.api.OxygenCommon;
 import austeretony.oxygen_core.common.item.ItemStackWrapper;
-import austeretony.oxygen_core.common.main.EnumOxygenStatusMessage;
 import austeretony.oxygen_core.common.main.OxygenMain;
-import austeretony.oxygen_core.common.sound.OxygenSoundEffects;
-import austeretony.oxygen_core.common.util.MathUtils;
-import austeretony.oxygen_core.common.util.StreamUtils;
-import austeretony.oxygen_core.server.OxygenManagerServer;
-import austeretony.oxygen_core.server.api.CurrencyHelperServer;
-import austeretony.oxygen_core.server.api.InventoryProviderServer;
-import austeretony.oxygen_core.server.api.PrivilegesProviderServer;
-import austeretony.oxygen_core.server.api.SoundEventHelperServer;
-import austeretony.oxygen_mail.client.MailManagerClient;
+import austeretony.oxygen_core.common.player.shared.PlayerSharedData;
+import austeretony.oxygen_core.common.sound.SoundEffects;
+import austeretony.oxygen_core.common.util.*;
+import austeretony.oxygen_core.common.util.objects.Pair;
+import austeretony.oxygen_core.server.api.OxygenServer;
+import austeretony.oxygen_core.server.api.PrivilegesServer;
+import austeretony.oxygen_core.server.operation.Operation;
 import austeretony.oxygen_mail.common.config.MailConfig;
-import austeretony.oxygen_mail.common.main.EnumMailPrivilege;
-import austeretony.oxygen_mail.common.main.EnumMailStatusMessage;
-import austeretony.oxygen_mail.server.MailManagerServer;
-import austeretony.oxygen_mail.server.api.MailHelperServer;
+import austeretony.oxygen_mail.common.main.MailMain;
+import austeretony.oxygen_mail.common.main.MailPrivileges;
+import austeretony.oxygen_mail.server.api.MailServer;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class AttachmentCOD implements Attachment {
 
-    public final ItemStackWrapper stackWrapper;
+    public static int MAX_ITEMS_PER_PARCEL = 4;
 
-    public final int amount, currencyIndex;
-
+    private final int currencyIndex;
+    private final Map<ItemStackWrapper, Integer> itemsMap;
     private final long value;
 
-    public AttachmentCOD(ItemStackWrapper stackWrapper, int itemAmount, int currencyIndex, long value) {
-        this.stackWrapper = stackWrapper;
-        this.amount = itemAmount;
+    //client
+    private CurrencyProperties properties;
+
+    protected AttachmentCOD(int currencyIndex, long value, Map<ItemStackWrapper, Integer> itemsMap) {
         this.currencyIndex = currencyIndex;
         this.value = value;
+        this.itemsMap = itemsMap;
     }
 
     @Override
-    public boolean send(EntityPlayerMP playerMP, Mail mail) {
-        if (this.value <= 0L || CurrencyHelperServer.getCurrencyProvider(this.currencyIndex) == null)
-            return false;
+    public AttachmentType getType() {
+        return AttachmentType.COD;
+    }
 
-        if (this.stackWrapper == null || (this.stackWrapper.getItemId() == Item.getIdFromItem(Items.AIR) || this.amount <= 0)) {
-            MailManagerServer.instance().sendStatusMessages(playerMP, EnumMailStatusMessage.PARCEL_DAMAGED);
-            return false;
-        }
-        if (MailManagerServer.instance().getItemsBlackList().isBlackListed(Item.getItemById(this.stackWrapper.getItemId()))) {
-            MailManagerServer.instance().sendStatusMessages(playerMP, EnumMailStatusMessage.ITEM_BLACKLISTED);
-            return false;
-        }
+    @Override
+    public boolean isValid(EntityPlayerMP playerMP) {
+        UUID playerUUID = MinecraftCommon.getEntityUUID(playerMP);
+        if (itemsMap.size() > MAX_ITEMS_PER_PARCEL || value > PrivilegesServer.getLong(playerUUID,
+                MailPrivileges.COD_MAX_VALUE.getId(), MailConfig.COD_MAX_VALUE.asLong())) return false;
+        int maxStackSize = PrivilegesServer.getInt(playerUUID, MailPrivileges.PARCEL_MAX_STACK_SIZE.getId(),
+                MailConfig.PARCEL_MAX_STACK_SIZE.asInt());
 
-        UUID playerUUID = CommonReference.getPersistentUUID(playerMP);
-        if (this.value <= PrivilegesProviderServer.getAsLong(playerUUID, EnumMailPrivilege.COD_MAX_VALUE.id(), MailConfig.COD_MAX_VALUE.asLong())) {
-            int maxAmount = PrivilegesProviderServer.getAsInt(playerUUID, EnumMailPrivilege.PARCEL_MAX_AMOUNT.id(), MailConfig.PARCEL_MAX_AMOUNT.asInt());
-            final ItemStack itemStack = this.stackWrapper.getItemStack();
-            if (maxAmount < 0) 
-                maxAmount = itemStack.getMaxStackSize();
-            if (this.amount <= maxAmount) {
-                long postage = PrivilegesProviderServer.getAsLong(playerUUID, EnumMailPrivilege.PARCEL_POSTAGE_VALUE.id(), MailConfig.PARCEL_POSTAGE_VALUE.asLong());
-                boolean postageExist = postage > 0;
-                if (InventoryProviderServer.getPlayerInventory().getEqualItemAmount(playerMP, this.stackWrapper) >= this.amount
-                        && (!postageExist || CurrencyHelperServer.enoughCurrency(playerUUID, postage, OxygenMain.COMMON_CURRENCY_INDEX))) {
-                    final int amount = this.amount;
-                    InventoryProviderServer.getPlayerInventory().removeItem(playerMP, this.stackWrapper, amount);
-                    if (postageExist) {
-                        CurrencyHelperServer.removeCurrency(playerUUID, postage, OxygenMain.COMMON_CURRENCY_INDEX);
-                        SoundEventHelperServer.playSoundClient(playerMP, OxygenSoundEffects.RINGING_COINS.getId());
-                    }
-                    return true;
-                }
+        for (Map.Entry<ItemStackWrapper, Integer> entry : itemsMap.entrySet()) {
+            if (OxygenServer.isItemBlacklisted(MailMain.ITEMS_BLACKLIST_MAIL, entry.getKey())) {
+                return false;
+            }
+            int maxStack = maxStackSize;
+            if (maxStack < 0) {
+                maxStack = OxygenCommon.getMaxItemStackSize(entry.getKey());
+            }
+            if (entry.getValue() <= 0 || entry.getValue() > maxStack) {
+                return false;
             }
         }
-        return false;
+        return OxygenServer.getCurrencyProvider(currencyIndex) != null && value > 0L;
     }
 
     @Override
-    public boolean receive(EntityPlayerMP playerMP, Mail mail) {
-        if (!InventoryProviderServer.getPlayerInventory().haveEnoughSpace(playerMP, this.stackWrapper, this.amount)) {
-            OxygenManagerServer.instance().sendStatusMessage(playerMP, EnumOxygenStatusMessage.INVENTORY_FULL);
-            return false;
+    public long getExpireTimeMillis(MailEntry mailEntry) {
+        return TimeUnit.HOURS.toMillis(MailConfig.COD_EXPIRE_TIME_HOURS.asInt());
+    }
+
+    @Override
+    public Pair<Integer, Long> getPostage(EntityPlayerMP playerMP) {
+        return Pair.of(currencyIndex, PrivilegesServer.getLong(MinecraftCommon.getEntityUUID(playerMP),
+                MailPrivileges.PARCEL_POSTAGE_VALUE.getId(), MailConfig.PARCEL_POSTAGE_VALUE.asLong()) * itemsMap.size());
+    }
+
+    @Override
+    public Pair<Integer, Long> getBalance(EntityPlayerMP playerMP) {
+        return Pair.of(currencyIndex, OxygenServer.getWatcherValue(MinecraftCommon.getEntityUUID(playerMP), currencyIndex, 0L));
+    }
+
+    @Override
+    public void send(EntityPlayerMP playerMP, Operation operation) {
+        operation.withItemsWithdraw(itemsMap);
+    }
+
+    @Override
+    public void playSendSound(EntityPlayerMP playerMP) {
+        OxygenServer.playSound(playerMP, SoundEffects.miscInventoryOperation);
+    }
+
+    @Override
+    public void receive(Operation operation, MailEntry mailEntry) {
+        operation.withCurrencyWithdraw(currencyIndex, value);
+        operation.withItemsAdd(itemsMap);
+
+        if (mailEntry.isSentByPlayer()) {
+            float feePercent = PrivilegesServer.getFloat(MinecraftCommon.getEntityUUID(operation.getPlayer()), MailPrivileges.COD_PRICE_FEE_PERCENT.getId(),
+                    MailConfig.COD_PRICE_FEE_PERCENT.asFloat());
+            long income = value - (long) (value * MathUtils.clamp(feePercent, 0F, 1F));
+
+            MailServer.systemMail(mailEntry.getSenderUUID(), "mail.cod_income.subject")
+                    .withSenderName(OxygenMain.SYSTEM_SENDER)
+                    .withMessage("mail.cod_income.message",
+                            MinecraftCommon.getEntityName(operation.getPlayer()), mailEntry.getSubject())
+                    .withAttachment(Attachments.remittance(currencyIndex, income))
+                    .withMailBoxCapacityIgnore()
+                    .send();
         }
-        UUID playerUUID = CommonReference.getPersistentUUID(playerMP);
-        if (CurrencyHelperServer.enoughCurrency(playerUUID, this.value, this.currencyIndex)) {
-            CurrencyHelperServer.removeCurrency(playerUUID, this.value, this.currencyIndex);
-            long codPostage = MathUtils.percentValueOf(
-                    this.value, 
-                    PrivilegesProviderServer.getAsInt(mail.getSenderUUID(), EnumMailPrivilege.COD_POSTAGE_PERCENT.id(), MailConfig.COD_POSTAGE_PERCENT.asInt()));
-            ItemStack itemStack = this.stackWrapper.getItemStack();
-            MailHelperServer.sendSystemMail(
-                    mail.getSenderUUID(),
-                    OxygenMain.SYSTEM_SENDER, 
-                    EnumMail.REMITTANCE,
-                    "mail.cod.pay.s", 
-                    Attachments.remittance(this.currencyIndex, this.value - codPostage),
-                    true,
-                    "mail.cod.pay.m",
-                    CommonReference.getName(playerMP), 
-                    String.valueOf(this.amount),
-                    itemStack.getDisplayName());       
-            InventoryProviderServer.getPlayerInventory().addItem(playerMP, this.stackWrapper, this.amount);     
-
-            SoundEventHelperServer.playSoundClient(playerMP, OxygenSoundEffects.INVENTORY_OPERATION.getId());
-            return true;
-        }
-        return false;
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
-    public long getPostage() {
-        return PrivilegesProviderClient.getAsLong(EnumMailPrivilege.PARCEL_POSTAGE_VALUE.id(), MailConfig.PARCEL_POSTAGE_VALUE.asLong())
-                + MathUtils.percentValueOf(this.value, PrivilegesProviderClient.getAsInt(EnumMailPrivilege.COD_POSTAGE_PERCENT.id(), MailConfig.COD_POSTAGE_PERCENT.asInt()));
+    public void playReceiveSound(EntityPlayerMP playerMP) {
+        OxygenServer.playSound(playerMP, SoundEffects.miscRingingCoins);
+        OxygenServer.playSound(playerMP, SoundEffects.miscInventoryOperation);
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
-    public boolean canSend() {
-        return WatcherHelperClient.getLong(this.currencyIndex) >= this.value;
+    public boolean canBeReturned(MailEntry mailEntry) {
+        return true;
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
-    public void sent() {
-        MailManagerClient.instance().getMenuManager().removeItemStack(this.stackWrapper, this.amount);
-    }
+    public void returnToSender(UUID initiatorUUID, MailEntry mailEntry) {
+        boolean isSystemReturn = initiatorUUID.equals(OxygenMain.SYSTEM_UUID);
+        String subject = isSystemReturn ? "mail.return_exp.subject" : "mail.return.subject";
+        String message = isSystemReturn ? "mail.return_exp.message" : "mail.return.message";
 
-    @Override
-    @SideOnly(Side.CLIENT)
-    public boolean canReceive() {
-        return WatcherHelperClient.getLong(this.currencyIndex) >= this.value
-                && InventoryProviderClient.getPlayerInventory().haveEnoughSpace(ClientReference.getClientPlayer(), this.stackWrapper, this.amount);
-    }
-
-    @Override
-    @SideOnly(Side.CLIENT)
-    public void received() {
-        MailManagerClient.instance().getMenuManager().addItemStack(this.stackWrapper, this.amount);
-    }
-
-    @Override
-    @SideOnly(Side.CLIENT)
-    public void draw(GUISimpleElement widget, int mouseX, int mouseY) {        
-        Minecraft mc = ClientReference.getMinecraft();
-
-        CurrencyProperties currencyProperties = OxygenHelperClient.getCurrencyProperties(this.currencyIndex);
-
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-
-        RenderHelper.enableGUIStandardItemLighting();            
-        GlStateManager.enableDepth();
-        mc.getRenderItem().renderItemAndEffectIntoGUI(this.stackWrapper.getCachedItemStack(), widget.getX(), widget.getY());   
-
-        if (widget.isDebugMode()) {
-            FontRenderer font = this.stackWrapper.getCachedItemStack().getItem().getFontRenderer(this.stackWrapper.getCachedItemStack());
-            if (font == null) 
-                font = mc.fontRenderer;
-            mc.getRenderItem().renderItemOverlayIntoGUI(font, this.stackWrapper.getCachedItemStack(), widget.getX(), widget.getY(), null);
+        PlayerSharedData sharedData = OxygenServer.getPlayerSharedData(initiatorUUID);
+        String addresseeArg = OxygenMain.SYSTEM_SENDER;
+        if (sharedData != null) {
+            addresseeArg = sharedData.getUsername();
         }
 
-        GlStateManager.disableDepth();
-        RenderHelper.disableStandardItemLighting();
-
-        GlStateManager.pushMatrix();           
-        GlStateManager.translate(widget.getX(), widget.getY(), 0.0F);   
-
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-
-        GlStateManager.pushMatrix();           
-        GlStateManager.translate(14.0F, 10.0F, 0.0F);            
-        GlStateManager.scale(widget.getTextScale(), widget.getTextScale(), 0.0F);   
-        mc.fontRenderer.drawString(String.valueOf(this.amount), 0, 0, widget.getEnabledTextColor(), false); 
-        GlStateManager.popMatrix();  
-
-        GlStateManager.pushMatrix();           
-        GlStateManager.translate(30.0F, 2.0F, 0.0F);            
-        GlStateManager.scale(widget.getTextScale(), widget.getTextScale(), 0.0F);   
-        mc.fontRenderer.drawString(ClientReference.localize("oxygen_mail.gui.mail.attachment.cost"), 0, 0, widget.getEnabledTextColor(), false); 
-        GlStateManager.popMatrix();  
-
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);  
-
-        GlStateManager.enableBlend(); 
-        mc.getTextureManager().bindTexture(currencyProperties.getIcon());
-        GUIAdvancedElement.drawCustomSizedTexturedRect(
-                30 + currencyProperties.getXOffset(), 
-                4 + (widget.getHeight() - currencyProperties.getIconHeight()) / 2 + currencyProperties.getYOffset(), 
-                0, 
-                0, 
-                currencyProperties.getIconWidth(), 
-                currencyProperties.getIconHeight(), 
-                currencyProperties.getIconWidth(), 
-                currencyProperties.getIconHeight());            
-        GlStateManager.disableBlend();
-
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-
-        GlStateManager.pushMatrix();           
-        GlStateManager.translate(41.0F, 4.0F + ((float) widget.getHeight() - widget.textHeight(widget.getTextScale())) / 2.0F, 0.0F);            
-        GlStateManager.scale(widget.getTextScale(), widget.getTextScale(), 0.0F);   
-        mc.fontRenderer.drawString(String.valueOf(this.value), 0, 0, widget.isEnabled() ? widget.getEnabledTextColor() : widget.getStaticBackgroundColor(), false); 
-        GlStateManager.popMatrix();   
-
-        GlStateManager.popMatrix();
-    }
-
-    @Override
-    public void write(BufferedOutputStream bos) throws IOException {
-        this.stackWrapper.write(bos);
-        StreamUtils.write((short) this.amount, bos);
-        StreamUtils.write((byte) this.currencyIndex, bos);
-        StreamUtils.write(this.value, bos);
-    }
-
-    public static Attachment read(BufferedInputStream bis) throws IOException {
-        return new AttachmentCOD(ItemStackWrapper.read(bis), StreamUtils.readShort(bis), StreamUtils.readByte(bis), StreamUtils.readLong(bis));
+        MailServer.systemMail(mailEntry.getSenderUUID(), subject)
+                .withSenderName(OxygenMain.SYSTEM_SENDER)
+                .withMessage(message, addresseeArg, mailEntry.getSubject())
+                .withAttachment(Attachments.parcel(itemsMap))
+                .withMailBoxCapacityIgnore()
+                .send();
     }
 
     @Override
     public void write(ByteBuf buffer) {
-        this.stackWrapper.write(buffer);
-        buffer.writeShort(this.amount);
-        buffer.writeByte(this.currencyIndex);
-        buffer.writeLong(this.value);
+        buffer.writeByte(itemsMap.size());
+        for (Map.Entry<ItemStackWrapper, Integer> entry : itemsMap.entrySet()) {
+            entry.getKey().write(buffer);
+            buffer.writeShort(entry.getValue());
+        }
+
+        buffer.writeByte(currencyIndex);
+        buffer.writeLong(value);
     }
 
-    public static Attachment read(ByteBuf buffer) {
-        return new AttachmentCOD(ItemStackWrapper.read(buffer), buffer.readShort(), buffer.readByte(), buffer.readLong());
+    public static AttachmentCOD read(ByteBuf buffer) {
+        int amount = buffer.readByte();
+        Map<ItemStackWrapper, Integer> itemsMap = new LinkedHashMap<>(amount);
+        for (int i = 0; i < amount; i++) {
+            itemsMap.put(ItemStackWrapper.read(buffer), (int) buffer.readShort());
+        }
+        return new AttachmentCOD(buffer.readByte(), buffer.readLong(), itemsMap);
     }
 
     @Override
-    public Attachment toParcel() {
-        return Attachments.parcel(this.stackWrapper, this.amount);
+    public NBTTagCompound writeToNBT() {
+        NBTTagCompound tagCompound = new NBTTagCompound();
+
+        NBTTagList itemsList = new NBTTagList();
+        for (Map.Entry<ItemStackWrapper, Integer> entry : itemsMap.entrySet()) {
+            NBTTagCompound entryTag = new NBTTagCompound();
+            entryTag.setTag("item_stack", entry.getKey().writeToNBT());
+            entryTag.setShort("quantity", entry.getValue().shortValue());
+            itemsList.appendTag(entryTag);
+        }
+        tagCompound.setTag("items_list", itemsList);
+
+        tagCompound.setByte("currency_index", (byte) currencyIndex);
+        tagCompound.setLong("value", value);
+
+        return tagCompound;
+    }
+
+    public static AttachmentCOD readFromNBT(NBTTagCompound tagCompound) {
+        NBTTagList itemsList = tagCompound.getTagList("items_list", 10);
+        Map<ItemStackWrapper, Integer> itemsMap = new LinkedHashMap<>(itemsList.tagCount());
+
+        for (int i = 0; i < itemsList.tagCount(); i++) {
+            NBTTagCompound entryTag = itemsList.getCompoundTagAt(i);
+            itemsMap.put(ItemStackWrapper.readFromNBT(entryTag.getCompoundTag("item_stack")),
+                    (int) entryTag.getShort("quantity"));
+        }
+
+        return new AttachmentCOD(tagCompound.getByte("currency_index"), tagCompound.getLong("value"), itemsMap);
     }
 
     @Override
-    public ItemStack getItemStack() {
-        return this.stackWrapper.getCachedItemStack();
+    public boolean isValid() {
+        if (itemsMap.size() > MAX_ITEMS_PER_PARCEL
+                || value > PrivilegesClient.getLong(MailPrivileges.COD_MAX_VALUE.getId(), MailConfig.COD_MAX_VALUE.asLong())) return false;
+        int maxStackSize = PrivilegesClient.getInt(MailPrivileges.PARCEL_MAX_STACK_SIZE.getId(), MailConfig.PARCEL_MAX_STACK_SIZE.asInt());
+
+        for (Map.Entry<ItemStackWrapper, Integer> entry : itemsMap.entrySet()) {
+            int maxStack = maxStackSize;
+            if (maxStack < 0) {
+                maxStack = OxygenCommon.getMaxItemStackSize(entry.getKey());
+            }
+            if (entry.getValue() <= 0 || entry.getValue() > maxStack) {
+                return false;
+            }
+        }
+        return OxygenClient.getCurrencyProperties(currencyIndex) != null && value > 0L;
+    }
+
+    @Override
+    public Pair<Integer, Long> getPostage() {
+        return Pair.of(OxygenMain.CURRENCY_COINS, PrivilegesClient.getLong(MailPrivileges.PARCEL_POSTAGE_VALUE.getId(),
+                MailConfig.PARCEL_POSTAGE_VALUE.asLong()) * itemsMap.size());
+    }
+
+    @Override
+    public void draw(Widget widget, int mouseX, int mouseY) {
+        int index = 0;
+        int x = 0;
+        for (Map.Entry<ItemStackWrapper, Integer> entry : itemsMap.entrySet()) {
+            x = index * 18 + index;
+            ItemStack itemStack = entry.getKey().getItemStackCached();
+            GUIUtils.renderItemStack(itemStack, x, 0, CoreSettings.ENABLE_DURABILITY_BARS_GUI_DISPLAY.asBoolean());
+
+            if (entry.getValue() > 1) {
+                float textScale = CoreSettings.SCALE_TEXT_ADDITIONAL.asFloat() - .05F;
+                GUIUtils.drawString(String.valueOf(entry.getValue()), 14 + x, 12, textScale,
+                        CoreSettings.COLOR_TEXT_BASE_ENABLED.asInt(), true);
+            }
+            index++;
+        }
+
+
+        float textScale = CoreSettings.SCALE_TEXT_ADDITIONAL.asFloat() - .05F;
+        float textHeight = GUIUtils.getTextHeight(textScale);
+        GUIUtils.drawString(MinecraftClient.localize("oxygen_mail.gui.mail.label.price"),x + 16 + 8,
+                (8 - textHeight) / 2F + .5F, textScale, CoreSettings.COLOR_TEXT_BASE_ENABLED.asInt(), false);
+
+        if (properties == null) {
+            properties = OxygenClient.getCurrencyProperties(currencyIndex);
+        }
+        if (properties == null) return;
+
+        GUIUtils.colorDef();
+        GUIUtils.drawTexturedRect(x + 16F + 8F,
+                8 + (8 - (properties.getIconHeight() + properties.getIconYOffset())) / 2F,
+                properties.getIconWidth(), properties.getIconHeight(), properties.getIconTexture(), 0, 0,
+                properties.getIconWidth(), properties.getIconHeight());
+
+        GUIUtils.drawString(CommonUtils.formatCurrencyValue(value), x + 16 + 8 + properties.getIconWidth() + 2 * properties.getIconXOffset() + 2,
+                8 + (8 - textHeight) / 2F + .5F, textScale, CoreSettings.COLOR_TEXT_BASE_ENABLED.asInt(), false);
+    }
+
+    @Override
+    public void drawForeground(Widget widget, int mouseX, int mouseY) {
+        int index = 0;
+        int boundX = 0;
+        for (ItemStackWrapper stackWrapper : itemsMap.keySet()) {
+            boundX = index * 18 + index;
+            if (mouseX >= widget.getX() + boundX && mouseY >= widget.getY() && mouseX < widget.getX() + boundX + 16
+                    && mouseY < widget.getY() + 16) {
+                int offset = 16 + 6;
+                int x = widget.getX() + boundX + offset;
+                int y = widget.getY() + 2;
+
+                ItemStack itemStack = stackWrapper.getItemStackCached();
+                List<String> tooltipLines = GUIUtils.getItemStackToolTip(itemStack);
+                float width = 0;
+                for (String line : tooltipLines) {
+                    float lineWidth = GUIUtils.getTextWidth(line, CoreSettings.SCALE_TEXT_TOOLTIP.asFloat()) + 6F;
+                    if (lineWidth > width) {
+                        width = lineWidth;
+                    }
+                }
+                int startX = widget.getScreenX() + width + boundX + offset > widget.getScreen().width ? (int) (x - width - offset) : x;
+
+                Widget.drawToolTip(startX, y, tooltipLines);
+            }
+            index++;
+        }
+
+        if (properties == null) {
+            properties = OxygenClient.getCurrencyProperties(currencyIndex);
+        }
+        if (properties == null) return;
+
+        if (mouseX >= widget.getX() + boundX + 16 + 8 && mouseY >= widget.getY() && mouseX < widget.getX() + boundX + 16 + 8 + 16
+                && mouseY < widget.getY() + 16) {
+            Widget.drawToolTip(mouseX, mouseY - Widget.TOOLTIP_HEIGHT, properties.getLocalizedName());
+        }
     }
 
     @Override
     public String toString() {
-        return String.format("[stack wrapper: %s, amount: %d, currency index: %d, price: %d]",
-                this.stackWrapper, 
-                this.amount,
-                this.currencyIndex, 
-                this.value);
+        return "AttachmentCOD[" +
+                "currencyIndex= " + currencyIndex + ", " +
+                "value= " + value + ", " +
+                "itemsMap" + CommonUtils.formatForLogging(itemsMap) +
+                "]";
     }
 }
