@@ -215,7 +215,13 @@ public class IncomingMailSection extends Section {
         for (TextLabel textLabel : messageLabelsList) {
             getWidgets().remove(textLabel);
         }
-        String messageStr = localize(mailEntry.getMessage(), mailEntry.getMessageArguments());
+
+        String[] args = mailEntry.getMessageArguments();
+        for (int i = 0; i < args.length; i++) {
+            String localized = localize(args[i]);
+            args[i] = localized;
+        }
+        String messageStr = localize(mailEntry.getMessage(), args);
         List<String> lines = GUIUtils.splitTextToLines(messageStr, Texts.additionalDark("").getScale(), 124);
         int index = 0;
         for (String line : lines) {
