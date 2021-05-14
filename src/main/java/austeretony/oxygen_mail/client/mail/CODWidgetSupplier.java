@@ -110,9 +110,9 @@ public class CODWidgetSupplier implements SelectionWidgetSupplier {
 
         long codPrice = numberField.getTypedNumberAsLong();
         if (codPrice != 0) {
-            int feePercent = PrivilegesClient.getInt(MailPrivileges.COD_PRICE_FEE_PERCENT.getId(),
-                    MailConfig.COD_PRICE_FEE_PERCENT.asInt());
-            long codFee = (long) (codPrice * (feePercent / 100F));
+            float feePercent = PrivilegesClient.getFloat(MailPrivileges.COD_PRICE_FEE_PERCENT.getId(),
+                    MailConfig.COD_PRICE_FEE_PERCENT.asFloat());
+            long codFee = (long) (codPrice * feePercent);
             postageValueStr = postageValueStr + " + " + CommonUtils.formatCurrencyValue(codFee);
         }
 

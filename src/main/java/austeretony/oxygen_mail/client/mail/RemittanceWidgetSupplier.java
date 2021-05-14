@@ -45,9 +45,9 @@ public class RemittanceWidgetSupplier implements SelectionWidgetSupplier {
 
     private void updatePostage() {
         long remittanceValue = numberField.getTypedNumberAsLong();
-        int postagePercent = PrivilegesClient.getInt(MailPrivileges.REMITTANCE_POSTAGE_PERCENT.getId(),
-                MailConfig.REMITTANCE_POSTAGE_PERCENT.asInt());
-        long postageValue = (long) (remittanceValue * (postagePercent / 100F));
+        float postagePercent = PrivilegesClient.getFloat(MailPrivileges.REMITTANCE_POSTAGE_PERCENT.getId(),
+                MailConfig.REMITTANCE_POSTAGE_PERCENT.asFloat());
+        long postageValue = (long) (remittanceValue * postagePercent);
 
         postageLabel.getText().setColorEnabled(CoreSettings.COLOR_TEXT_BASE_ENABLED.asInt());
         long balance = OxygenClient.getWatcherValue(OxygenMain.CURRENCY_COINS, 0L);
