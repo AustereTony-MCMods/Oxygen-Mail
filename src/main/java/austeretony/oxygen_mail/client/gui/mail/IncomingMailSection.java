@@ -177,9 +177,9 @@ public class IncomingMailSection extends Section {
     private Comparator<MailEntry> getSortersComparator() {
         if (receiveTimeSorter.getState() != Sorter.State.INACTIVE) {
             if (receiveTimeSorter.getState() == Sorter.State.DOWN) {
-                return Comparator.comparingLong(MailEntry::getId);
-            } else {
                 return Comparator.comparingLong(MailEntry::getId).reversed();
+            } else {
+                return Comparator.comparingLong(MailEntry::getId);
             }
         } else {
             if (subjectSorter.getState() == Sorter.State.DOWN) {

@@ -1,7 +1,7 @@
 key.oxygen_mail.open_mail_screen=Open Mail Screen
 
 oxygen.gui.setting.mail_screen_alignment=Mail screen alignment
-oxygen.gui.setting.add_mail_screen=Add mail screen
+oxygen.gui.setting.add_mail_screen=Show mail screen
 
 oxygen_main.attachment_type.none=No attachment
 oxygen_main.attachment_type.remittance=Remittance
@@ -44,10 +44,10 @@ oxygen_mail.gui.mail.sending.button.send_mail=Send mail
 oxygen_mail.gui.mail.sending.callback.send_mail=Send Mail
 
 oxygen_mail.gui.mail.sending.callback.item_selection=Item Selection
-oxygen_mail.gui.mail.sending.callback.item_selection.parcel.message=Select the item and quantity to add to the parcel.
-oxygen_mail.gui.mail.sending.callback.item_selection.cod.message=Select the item and quantity to add to the package.
+oxygen_mail.gui.mail.sending.callback.item_selection.parcel.message=Select the item and quantity to attachment.
+oxygen_mail.gui.mail.sending.callback.item_selection.cod.message=Select the item and quantity to attachment.
 
-oxygen_mail.gui.mail.incoming.context.receive_attachment=Take attachment
+oxygen_mail.gui.mail.incoming.context.receive_attachment=Receive attachment
 oxygen_mail.gui.mail.incoming.context.return_mail=Return to sender
 oxygen_mail.gui.mail.incoming.context.remove_mail=Remove
 

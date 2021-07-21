@@ -5,6 +5,7 @@ import austeretony.oxygen_core.client.api.PrivilegesClient;
 import austeretony.oxygen_core.client.gui.base.Textures;
 import austeretony.oxygen_core.client.gui.base.block.Texture;
 import austeretony.oxygen_core.client.gui.base.button.ImageButton;
+import austeretony.oxygen_core.client.gui.base.common.Rectangle;
 import austeretony.oxygen_core.client.gui.base.common.WidgetGroup;
 import austeretony.oxygen_core.client.gui.base.core.Callback;
 import austeretony.oxygen_core.client.gui.base.core.Section;
@@ -27,7 +28,7 @@ import java.util.Map;
 
 public class ParcelWidgetSupplier implements SelectionWidgetSupplier {
 
-    public static final int BTN_SIZE = 10;
+    public static final int BTN_SIZE = 6;
     public static final Texture PLUS_ICONS_TEXTURE = Texture.builder()
             .texture(Textures.PLUS_ICONS)
             .size(BTN_SIZE, BTN_SIZE)
@@ -43,7 +44,7 @@ public class ParcelWidgetSupplier implements SelectionWidgetSupplier {
     @Override
     public WidgetGroup getWidgetGroup() {
         widgetGroup = new WidgetGroup();
-        selectItemButton = new ImageButton(3, 3, 10, 10, PLUS_ICONS_TEXTURE)
+        selectItemButton = new ImageButton(5, 5, 6, 6, PLUS_ICONS_TEXTURE)
                 .setMouseClickListener((x, y, mouseButton) -> selectItem());
         widgetGroup.addWidget(selectItemButton);
         postageLabel = createPostageWidget(OxygenMain.CURRENCY_COINS, 0, 25, widgetGroup);
@@ -73,7 +74,7 @@ public class ParcelWidgetSupplier implements SelectionWidgetSupplier {
 
     private void updateSelectItemButtonState() {
         int size = selectedItemsWidgetsList.size();
-        selectItemButton.setPosition(size * 20 + 3, 3);
+        selectItemButton.setPosition(size * 20 + 5, 5);
         selectItemButton.setEnabled(true);
         selectItemButton.setVisible(true);
         if (size == AttachmentParcel.MAX_ITEMS_PER_PARCEL) {

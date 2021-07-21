@@ -41,7 +41,7 @@ public class CODWidgetSupplier implements SelectionWidgetSupplier {
     public WidgetGroup getWidgetGroup() {
         widgetGroup = new WidgetGroup();
 
-        selectItemButton = new ImageButton(3, 3, 10, 10, ParcelWidgetSupplier.PLUS_ICONS_TEXTURE)
+        selectItemButton = new ImageButton(5, 5, 6, 6, ParcelWidgetSupplier.PLUS_ICONS_TEXTURE)
                 .setMouseClickListener((x, y, mouseButton) -> selectItem());
         widgetGroup.addWidget(selectItemButton);
 
@@ -87,7 +87,7 @@ public class CODWidgetSupplier implements SelectionWidgetSupplier {
 
     private void updateSelectItemButtonState() {
         int size = selectedItemsWidgetsList.size();
-        selectItemButton.setPosition(size * 20 + 3, 3);
+        selectItemButton.setPosition(size * 20 + 5, 5);
         selectItemButton.setEnabled(true);
         selectItemButton.setVisible(true);
         if (size == AttachmentCOD.MAX_ITEMS_PER_PARCEL) {

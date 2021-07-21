@@ -1,7 +1,7 @@
 key.oxygen_mail.open_mail_screen=Открыть Почту
 
 oxygen.gui.setting.mail_screen_alignment=Выравнивание меню почты
-oxygen.gui.setting.add_mail_screen=Добавить меню почты
+oxygen.gui.setting.add_mail_screen=Показывать меню почты
 
 oxygen_main.attachment_type.none=Без вложения
 oxygen_main.attachment_type.remittance=Денежный перевод
@@ -44,8 +44,8 @@ oxygen_mail.gui.mail.sending.button.send_mail=Отправить письмо
 oxygen_mail.gui.mail.sending.callback.send_mail=Отправить Письмо
 
 oxygen_mail.gui.mail.sending.callback.item_selection=Выбор Предмета
-oxygen_mail.gui.mail.sending.callback.item_selection.parcel.message=Выбирите предмет и количество для добавления в посылку.
-oxygen_mail.gui.mail.sending.callback.item_selection.cod.message=Выбирите предмет и количество для добавления в посылку.
+oxygen_mail.gui.mail.sending.callback.item_selection.parcel.message=Выберите предмет и количество для вложения.
+oxygen_mail.gui.mail.sending.callback.item_selection.cod.message=Выберите предмет и количество для вложения.
 
 oxygen_mail.gui.mail.incoming.context.receive_attachment=Забрать вложение
 oxygen_mail.gui.mail.incoming.context.return_mail=Вернуть отправителю
